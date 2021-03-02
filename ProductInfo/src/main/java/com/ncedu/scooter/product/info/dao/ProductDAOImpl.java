@@ -1,6 +1,6 @@
 package com.ncedu.scooter.product.info.dao;
 
-import com.ncedu.scooter.product.info.entity.Products;
+import com.ncedu.scooter.product.info.entity.Product;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,27 +13,27 @@ public class ProductDAOImpl implements ProductDAO  {
     @Autowired
     private EntityManager entityManager;
     @Override
-   public List<Products> getAllProducts() {
+   public List<Product> getAllProducts() {
 
        Session session = entityManager.unwrap(Session.class);
-       Query<Products> query = session.createQuery("From products",Products.class);
-       List<Products> allProducts = query.getResultList();
+       Query<Product> query = session.createQuery("From product",Product.class);
+       List<Product> allProducts = query.getResultList();
         return allProducts;
     }
     @Override
-    public Products getProduct(int code) {
+    public Product getProduct(int code) {
         Session session = entityManager.unwrap(Session.class);
-        Products products = session.get(Products.class,code);
-        return products;
+        Product product = session.get(Product.class,code);
+        return product;
     }
     @Override
-    public List<Products> getProductsCategory(String category) {
+    public List<Product> getProductsCategory(String category) {
 
         Session session = entityManager.unwrap(Session.class);
-        Query<Products> query = session.createQuery("From products where category =: productsCategory",Products.class);
+        Query<Product> query = session.createQuery("From product where category =: productsCategory",Product.class);
         query.setParameter("productsCategory",category);
-        List<Products> productsCategory = query.getResultList();
-        return productsCategory;
+        List<Product> productCategory = query.getResultList();
+        return productCategory;
 
     }
 }

@@ -6,11 +6,13 @@ import javax.persistence.*;
 import org.hibernate.search.annotations.*;
 import org.hibernate.search.annotations.Index;
 
-@Entity(name="products")
-@Table(name="products")
+@Entity(name="product")
+@Table(name="product")
 @Indexed
 
-public class Products {
+public class Product {
+
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO )
     @Column(name = "code")
@@ -30,9 +32,14 @@ public class Products {
     @Column(name = "description")
 
     private String description;
+    @Column(name = "manufacturer")
 
-    public Products() {
+    private String manufacturer;
+
+
+    public Product() {
     }
+
 
     public int getCode() {
         return code;
@@ -74,9 +81,18 @@ public class Products {
         this.description = description;
     }
 
+    public void setManufacturer(String manufacturer) {
+        this.manufacturer = manufacturer;
+    }
+
+    public String getManufacturer() {
+
+        return manufacturer;
+    }
+
     @Override
     public String toString() {
-        return "Products{" +
+        return "Product{" +
                 "code=" + code +
                 ", name='" + name + '\'' +
                 ", price=" + price +
