@@ -1,0 +1,14 @@
+.login-view {
+    display: block;
+    margin: 0 auto;
+    max-width: 500px;
+    padding: 0 var(--lumo-space-l);
+    text-align: center;
+}
+.login-view .button-layout {
+    margin-bottom: var(--lumo-space-l);
+    margin-top: var(--lumo-space-m);
+    display: flex;
+    justify-content: center;
+
+}
