@@ -1,103 +1,48 @@
 package com.ncedu.scooter.product.info.entity;
 
 
-import javax.persistence.*;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
-import org.hibernate.search.annotations.*;
-import org.hibernate.search.annotations.Index;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.validation.constraints.NotEmpty;
 
-@Entity(name="product")
-@Table(name="product")
-@Indexed
-
+@Schema(description = "Entity Product")
+@Entity(name = "product")
+@Table(name = "product")
+@Data
 public class Product {
 
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO )
     @Column(name = "code")
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Schema(description = "Code")
+    @NotEmpty
     private int code;
 
-    @Field
     @Column(name = "name")
+    @NotEmpty
     private String name;
 
     @Column(name = "price")
+    @NotEmpty
     private double price;
 
     @Column(name = "category")
-
+    @NotEmpty
     private String category;
 
     @Column(name = "description")
-
+    @NotEmpty
     private String description;
-    @Column(name = "manufacturer")
 
+    @Column(name = "manufacturer")
+    @NotEmpty
     private String manufacturer;
 
-
-    public Product() {
-    }
-
-
-    public int getCode() {
-        return code;
-    }
-
-    public void setCode(int code) {
-        this.code = code;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public double getPrice() {
-        return price;
-    }
-
-    public void setPrice(double price) {
-        this.price = price;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void setManufacturer(String manufacturer) {
-        this.manufacturer = manufacturer;
-    }
-
-    public String getManufacturer() {
-
-        return manufacturer;
-    }
-
-    @Override
-    public String toString() {
-        return "Product{" +
-                "code=" + code +
-                ", name='" + name + '\'' +
-                ", price=" + price +
-                ", category='" + category + '\'' +
-                ", description='" + description + '\'' +
-                '}';
-    }
 }
