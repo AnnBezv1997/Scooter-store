@@ -41,6 +41,7 @@ public class AuthController {
         } else {
             return "NOT";
         }
+        //вот здесь еще переделаю сделала строки эти пока чтобы фронт принимал, там сделаю user'а и тут поменяю
     }
 
     @Operation(summary = "Authentification user", description = "Authentification user and generates a token")
