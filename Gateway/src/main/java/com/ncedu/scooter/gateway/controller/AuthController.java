@@ -1,13 +1,20 @@
 package com.ncedu.scooter.gateway.controller;
 
 import com.ncedu.scooter.gateway.entity.User;
+import com.ncedu.scooter.gateway.exception.PasswordIncorrect;
+import com.ncedu.scooter.gateway.exception.UserNotFound;
 import com.ncedu.scooter.gateway.security.jsonwebtoken.JwtProvider;
 import com.ncedu.scooter.gateway.service.UserService;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PathVariable;
 
 
 import javax.validation.Valid;
@@ -23,20 +30,31 @@ public class AuthController {
 
     @Operation(summary = "Registration user", description = "Accepts RegistrationRequest and registers")
     @PostMapping("/register")
-    public boolean registerUser(@RequestBody @Valid RegistrationRequest registrationRequest) {
+    public String registerUser(@RequestBody @Valid RegistrationRequest registrationRequest) {
         User u = new User();
         u.setPassword(registrationRequest.getPassword());
         u.setLogin(registrationRequest.getLogin());
         u.setAddress(registrationRequest.getAddress());
-        return userService.saveUser(u);
+
+        if (userService.saveUser(u)) {
+            return "OK";
+        } else {
+            return "NOT";
+        }
     }
 
     @Operation(summary = "Authentification user", description = "Authentification user and generates a token")
     @PostMapping("/auth")
-    public AuthResponse auth(@RequestBody AuthRequest request) {
-        User user = userService.findByLoginAndPassword(request.getLogin(), request.getPassword());
-        String token = jwtProvider.generateToken(user.getLogin());
-        return new AuthResponse(token);
+    public AuthResponse auth(@RequestBody @Valid AuthRequest request) {
+        try {
+            User user = userService.findByLoginAndPassword(request.getLogin(), request.getPassword());
+            String token = jwtProvider.generateToken(user.getLogin());
+            return new AuthResponse(token);
+        } catch (UserNotFound | PasswordIncorrect ex) {
+            ex.getMessage();
+            return null;
+        }
+
     }
 
 
