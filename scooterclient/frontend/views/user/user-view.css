@@ -1,0 +1,35 @@
+.user-view {
+  display: block;
+  margin: 0 auto;
+  max-width: 600px;
+  padding: 0 var(--lumo-space-l);
+  text-align: center;
+}
+.user-view .button-layout {
+  margin-bottom: var(--lumo-space-l);
+  margin-top: var(--lumo-space-m);
+  display: flex;
+  justify-content: center;
+
+}
+.v-Notification.mystyle {
+  margin-bottom: var(--lumo-space-l);
+  margin-top: var(--lumo-space-m);
+  display: flex;
+  justify-content: center;
+}
+.back-dialog{
+    width:100%;
+    min-height:100%;
+    background-color: rgba(0,0,0,0.5);
+    overflow:hidden;
+    position:fixed;
+    top:0px;
+}
+.dialog-content{
+    display: block;
+    margin: 0 auto;
+    width: 600px;
+    padding: 0 var(--lumo-space-l);
+    text-align: center;
+}

@@ -3,7 +3,7 @@ package com.ncedu.scooter.client.views.login;
 import com.ncedu.scooter.client.model.AuthRequest;
 import com.ncedu.scooter.client.model.AuthResponse;
 import com.ncedu.scooter.client.service.AuthService;
-import com.ncedu.scooter.client.views.main.MainView;
+import com.ncedu.scooter.client.views.main.MainViewAuth;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -26,13 +26,12 @@ import com.vaadin.flow.server.VaadinSession;
 
 
 @CssImport("./views/login/login-view.css")
-@Route(value = "login", layout = MainView.class)
+@Route(value = "login", layout = MainViewAuth.class)
 @PageTitle("Login")
 public class LoginView extends Div {
 
     private PhoneNumberField login = new PhoneNumberField("Phone number");
     private PasswordField password = new PasswordField("Password");
-
     private Button cancel = new Button("Cancel");
     private Button save = new Button("Login");
 
@@ -52,10 +51,13 @@ public class LoginView extends Div {
             AuthResponse authResponse = authService.auth(binder.getBean());
 
             if (authResponse != null) {
-                Notification.show("Welcome!", 5000, Notification.Position.MIDDLE);
+                Notification.show("Welcome!", 4000, Notification.Position.MIDDLE);
+
+                VaadinSession.getCurrent().setAttribute("authResponse", authResponse);
                 VaadinSession.getCurrent().setAttribute("token", authResponse.getToken());
+                VaadinSession.getCurrent().getSession().setMaxInactiveInterval(3600); //длительность сессии час
                 save.getUI().ifPresent(ui -> {
-                    ui.navigate("catalog");
+                    ui.navigate("user");
                     //здесь будет переходить на страницу каталога
                 });
                 clearForm();
@@ -104,7 +106,7 @@ public class LoginView extends Div {
         private ComboBox<String> countryCode = new ComboBox<>();
         private TextField number = new TextField();
 
-         PhoneNumberField(String label) {
+        PhoneNumberField(String label) {
             setLabel(label);
             countryCode.setWidth("120px");
             countryCode.setPlaceholder("Country");

@@ -7,13 +7,12 @@ import lombok.Data;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-
-public class AuthResponse {
+public class Role {
     @JsonCreator
-    public AuthResponse(@JsonProperty("token") String token, @JsonProperty("user") User user) {
-        this.token = token;
-        this.user = user;
+    public Role(@JsonProperty("id") Integer id, @JsonProperty("name") String name) {
+        this.id = id;
+        this.name = name;
     }
-    private String token;
-    private User user;
+    private Integer id;
+    private String name;
 }
