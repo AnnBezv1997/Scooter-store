@@ -3,7 +3,7 @@ package com.ncedu.scooter.client.views.register;
 
 import com.ncedu.scooter.client.model.RegistrationRequest;
 import com.ncedu.scooter.client.service.RegistrationService;
-import com.ncedu.scooter.client.views.main.MainView;
+import com.ncedu.scooter.client.views.main.MainViewAuth;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -21,17 +21,10 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.web.client.RestTemplate;
-
-import static com.ncedu.scooter.client.service.Url.REGISTER_URL;
 
 
 @CssImport("./views/register/register-view.css")
-@Route(value = "register", layout = MainView.class)
+@Route(value = "register", layout = MainViewAuth.class)
 @PageTitle("register")
 public class RegisterView extends Div {
 

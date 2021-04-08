@@ -16,6 +16,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabVariant;
 import com.vaadin.flow.component.tabs.Tabs;
+import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.PWA;
 import com.ncedu.scooter.client.views.login.LoginView;
@@ -28,11 +29,12 @@ import com.ncedu.scooter.client.views.register.RegisterView;
 @CssImport("./views/main/main-view.css")
 @PWA(name = "ScooterClient", shortName = "ScooterClient", enableInstallPrompt = false)
 @JsModule("./styles/shared-styles.js")
-public class MainView extends AppLayout {
+
+public class MainViewAuth extends AppLayout {
 
     private final Tabs menu;
 
-    public MainView() {
+    public MainViewAuth() {
         HorizontalLayout header = createHeader();
         menu = createMenuTabs();
         addToNavbar(createTopBar(header, menu));

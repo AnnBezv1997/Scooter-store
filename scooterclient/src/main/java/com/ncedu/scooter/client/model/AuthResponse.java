@@ -10,8 +10,10 @@ import lombok.Data;
 
 public class AuthResponse {
     @JsonCreator
-    public AuthResponse(@JsonProperty("token") String token) {
+    public AuthResponse(@JsonProperty("token") String token, @JsonProperty("user") User user) {
         this.token = token;
+        this.user = user;
     }
     private String token;
+    private User user;
 }
