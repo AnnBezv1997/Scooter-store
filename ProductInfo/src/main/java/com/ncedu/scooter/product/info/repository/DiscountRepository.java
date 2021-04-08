@@ -8,8 +8,8 @@ import org.springframework.stereotype.Repository;
 import java.util.ArrayList;
 
 @Repository
-public interface ProductRepository extends CrudRepository<Discount, Integer> {
+public interface DiscountRepository extends CrudRepository<Discount, Integer> {
     Discount findById(int id);
-    ArrayList<Discount> findAllProducts();
 
+    ArrayList<Discount> findAllDiscount();
 }

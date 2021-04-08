@@ -1,20 +1,26 @@
 package com.ncedu.scooter.product.info.entity;
 
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.Id;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.validation.constraints.NotEmpty;
+import javax.persistence.Enumerated;
+import javax.persistence.EnumType;
 import java.math.BigDecimal;
 
-@Schema(description = "Entity Product")
-@Entity(name = "product")
-@Table(name = "product")
+@Schema(description = "Entity Discount")
+@Entity(name = "discount")
+@Table(name = "discount")
 @Data
 @AllArgsConstructor
-public class Product {
+public class Discount {
 
     @Column(name = "id")
     @Id
@@ -30,22 +36,11 @@ public class Product {
     @NotEmpty
     private String description;
 
-    @Column(name = "price")
-    @NotEmpty
-    private BigDecimal price;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type")
+    private  DiscountType discountType;
 
-    @Column(name = "image")
-    private String image;
+    @Column(name = "value")
+    private BigDecimal value;
 
-    @NotEmpty
-    @OneToOne(cascade = CascadeType.ALL)
-    @PrimaryKeyJoinColumn
-    private StockStatus stockStatus;
-
-    @ManyToOne
-    @JoinColumn(name = "category_id")
-    private Category category;
-    @ManyToOne
-    @JoinColumn(name = "discount_id")
-    private Discount discount;
 }
