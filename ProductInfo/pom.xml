@@ -46,19 +46,7 @@
 			<artifactId>h2</artifactId>
 			<scope>runtime</scope>
 		</dependency>
-		<!--  hibernate-search -->
-		<dependency>
-			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-search</artifactId>
-			<version>5.11.8.Final</version>
-			<type>pom</type>
-		</dependency>
 
-		<dependency>
-			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-search-orm</artifactId>
-			<version>5.11.8.Final</version>
-		</dependency>
 		<!-- eureka srever -->
 
 	<dependency>

@@ -1,16 +1,15 @@
 package com.ncedu.scooter.product.info.repository;
 
+import com.ncedu.scooter.product.info.entity.Discount;
 import com.ncedu.scooter.product.info.entity.Product;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import java.util.ArrayList;
 
-public interface ProductRepository extends CrudRepository<Product, Integer> {
-    Product findByCode(int code);
-
-    List<Product> findAllByCategory(String category);
-
-    List<Product> findAll();
-
+@Repository
+public interface ProductRepository extends CrudRepository<Discount, Integer> {
+    Discount findById(int id);
+    ArrayList<Discount> findAllProducts();
 
 }

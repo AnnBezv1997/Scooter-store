@@ -1,40 +1,81 @@
 package com.ncedu.scooter.product.info.service;
 
+import com.ncedu.scooter.product.info.entity.Discount;
 import com.ncedu.scooter.product.info.entity.Product;
+import com.ncedu.scooter.product.info.exception.ProductNotFound;
 import com.ncedu.scooter.product.info.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.ArrayList;
+
+import static com.ncedu.scooter.product.info.exception.ExceptionMessage.PRODUCT_NOT_FOUND;
 
 @Service
 public class ProductService {
     @Autowired
     ProductRepository productRepository;
 
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
+    public Product findById(int id) throws ProductNotFound {
+        Product product = productRepository.findById(id);
+        if (product != null) {
+            return product;
+        } else {
+            throw new ProductNotFound(PRODUCT_NOT_FOUND);
+        }
     }
 
-    public List<Product> getProductsCategory(String category) {
-        return productRepository.findAllByCategory(category);
-
+    public ArrayList<Product> getAllPriducts() {
+        return productRepository.findAllProducts();
     }
 
-    public Product getProduct(int code) {
-        return productRepository.findByCode(code);
+    public boolean saveProduct(Product product) {
+        Product p = productRepository.findById((int) product.getId());
+        if (p != null) {
+            return false;
+        } else {
+            productRepository.save(product);
+            return true;
+        }
     }
 
-    public void saveProduct(Product product) {
-        productRepository.save(product);
+    public boolean updateProduct(Product product) {
+        Product p = new Product(product.getId(), product.getName(), product.getDescription(),
+                product.getPrice(), product.getImage(), product.getStockStatus(),
+                product.getCategory(), product.getDiscount());
+        productRepository.save(p);
+        return true;
     }
-    public void updateProduct(int code, Product product) {
-        Product oldProduct = productRepository.findByCode(code);
-        oldProduct.setName(product.getName());
-        oldProduct.setPrice(product.getPrice());
-        oldProduct.setCategory(product.getCategory());
-        oldProduct.setDescription(product.getDescription());
-        oldProduct.setManufacturer(product.getManufacturer());
+
+    public boolean deleteProduct(int id) {
+        Product product = productRepository.findById(id);
+        if (product != null) {
+            return false;
+        } else {
+            productRepository.delete(product);
+            return true;
+        }
+    }
+
+    public boolean addUpdateDiscount(Discount discount, Product product) {
+        Product p = productRepository.findById((int) product.getId());
+        if (p != null) {
+            p.setDiscount(discount);
+            productRepository.save(p);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean deleteDiscount(Product product) {
+        Product p = productRepository.findById((int) product.getId());
+        if (p != null) {
+            p.setDiscount(null);
+            productRepository.save(p);
+            return true;
+        } else {
+            return false;
+        }
     }
 }

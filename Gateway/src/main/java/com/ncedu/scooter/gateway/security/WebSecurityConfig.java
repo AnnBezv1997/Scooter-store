@@ -32,8 +32,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .authorizeRequests()
                 .antMatchers("/admin/*").hasRole("ADMIN")
-               // .antMatchers("/scooter/catalog").hasRole("USER")
-                .antMatchers("/scooter/register", "/scooter/login", "/gateway/auth", "/gateway/register").permitAll()
+                .antMatchers("/scooter/catalog", "/gateway/user/*").hasRole("USER")
+                .antMatchers("/gateway/auth", "/gateway/register").permitAll()
                 .and()
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
     }
