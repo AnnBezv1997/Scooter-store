@@ -13,12 +13,7 @@ import com.ncedu.scooter.gateway.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.ArrayList;
@@ -51,13 +46,13 @@ public class UserController {
 
     @Operation(summary = "Add user address", description = "")
     @PostMapping("/address/add")
-    public String addUserAddress(@RequestBody @Valid AddressRequest addressRequest) throws UserNotFound {
+    public Address addUserAddress(@RequestBody @Valid AddressRequest addressRequest) throws UserNotFound {
         Address address = new Address();
         User u = userService.findByLogin(addressRequest.getUserLogin());
         address.setAddress(addressRequest.getAddress());
         address.setUser(u);
         if (addressService.saveUserAddress(address)) {
-            return "OK";
+            return address;
         } else {
             return null;
         }
@@ -65,7 +60,7 @@ public class UserController {
 
     @Operation(summary = "Delete user address", description = "")
     @PostMapping("/address/delete")
-    public String deleteAddress(@RequestBody @Valid Address address)  {
+    public String deleteAddress(@RequestBody @Valid Address address) {
         if (addressService.deleteAddress(address)) {
             return "OK";
         } else {
@@ -74,12 +69,9 @@ public class UserController {
     }
 
     @PostMapping("/name/add")
-    public String addUserName(@RequestBody @Valid NameAddRequest nameAddRequest) {
-        if (userService.addName(nameAddRequest.getLogin(), nameAddRequest.getName())) {
-            return "OK";
-        } else {
-            return null;
-        }
+    public User addUserName(@RequestBody @Valid NameAddRequest nameAddRequest)  {
+       return userService.addName(nameAddRequest.getLogin(), nameAddRequest.getName());
+
     }
 
     @PostMapping("/login/update")

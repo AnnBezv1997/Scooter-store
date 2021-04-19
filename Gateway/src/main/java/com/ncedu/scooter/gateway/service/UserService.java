@@ -53,11 +53,12 @@ public class UserService {
         return true;
     }
 
-    public boolean addName(String login, String name) {
+    public User addName(String login, String name) {
         User u = userRepository.findByLogin(login);
         u.setName(name);
         userRepository.save(u);
-        return true;
+        return u;
+
     }
 
     public User findByLoginAndPassword(String login, String password) throws UserNotFound, PasswordIncorrect {

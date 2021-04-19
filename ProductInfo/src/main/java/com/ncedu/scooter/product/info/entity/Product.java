@@ -1,12 +1,15 @@
 package com.ncedu.scooter.product.info.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 @Schema(description = "Entity Product")
@@ -14,32 +17,35 @@ import java.math.BigDecimal;
 @Table(name = "product")
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
+@JsonPropertyOrder({"id", "name", "description", "price", "image", "stockStatus", "category", "discount"})
+
 public class Product {
 
     @Column(name = "id")
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @SequenceGenerator(name = "productIdSeq", sequenceName = "product_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "productIdSeq")
     @Schema(description = "Id")
-    @NotEmpty
     private Integer id;
 
     @Column(name = "name")
     @NotEmpty
     private String name;
+
     @Column(name = "description")
     @NotEmpty
     private String description;
 
     @Column(name = "price")
-    @NotEmpty
+    @NotNull
     private BigDecimal price;
 
     @Column(name = "image")
     private String image;
 
-    @NotEmpty
     @OneToOne(cascade = CascadeType.ALL)
-    @PrimaryKeyJoinColumn
+  //@PrimaryKeyJoinColumn
     private StockStatus stockStatus;
 
     @ManyToOne

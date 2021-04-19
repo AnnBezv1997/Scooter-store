@@ -34,5 +34,10 @@ public class ScooterRestTemplate {
         HttpEntity<?> requestBody = new HttpEntity<>(headers);
         return restTemplate.exchange(url, HttpMethod.GET, requestBody, responseType);
     }
-
+    public <T> ResponseEntity<T> get(String url, Class<T> responseType, Object body, String token) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "Bearer " + token);
+        HttpEntity<?> requestBody = new HttpEntity<>(body, headers);
+        return restTemplate.exchange(url, HttpMethod.GET, requestBody, responseType);
+    }
 }

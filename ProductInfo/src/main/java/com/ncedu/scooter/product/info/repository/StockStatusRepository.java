@@ -10,4 +10,5 @@ import java.util.ArrayList;
 public interface StockStatusRepository extends CrudRepository<StockStatus, Integer> {
     StockStatus findById(int id);
     ArrayList<StockStatus> findAll();
+
 }

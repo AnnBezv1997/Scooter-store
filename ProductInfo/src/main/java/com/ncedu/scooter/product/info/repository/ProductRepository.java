@@ -6,9 +6,14 @@ import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 
+
 @Repository
 public interface ProductRepository extends CrudRepository<Product, Integer> {
     Product findById(int id);
+
     ArrayList<Product> findAll();
+    ArrayList<Product> findByDiscountId(int id);
+    ArrayList<Product> findByCategoryId(int id);
+
 
 }
