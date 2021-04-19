@@ -1,6 +1,10 @@
 package com.ncedu.scooter.client.views.main;
 
+import com.ncedu.scooter.client.model.User;
+import com.ncedu.scooter.client.model.request.AuthResponse;
 import com.ncedu.scooter.client.views.address.AddressView;
+import com.ncedu.scooter.client.views.catalog.CatalogView;
+import com.ncedu.scooter.client.views.catalog.CatalogViewAdmin;
 import com.ncedu.scooter.client.views.user.UserView;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentUtil;
@@ -19,13 +23,10 @@ import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.tabs.TabsVariant;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.RouterLink;
+import com.vaadin.flow.server.VaadinSession;
 
 import java.util.Optional;
 
-/**
- * The main view is a top-level placeholder for other views.
- */
-//@PWA(name = "My App", shortName = "My App", enableInstallPrompt = false)
 @JsModule("./styles/shared-styles.js")
 @CssImport("./views/main/main-view-new.css")
 
@@ -81,7 +82,15 @@ public class ViewCatalog extends AppLayout {
     }
 
     private Component[] createMenuItems() {
-        return new Tab[]{createTab("User View", UserView.class), createTab("Address", AddressView.class)};
+        AuthResponse authResponse = (AuthResponse) VaadinSession.getCurrent().getAttribute("authResponse");
+        User user = authResponse.getUser();
+        if (user.getRole().getName().equals("ROLE_ADMIN")) {
+            return new Tab[]{createTab("Catalog Settings", CatalogViewAdmin.class), createTab("Catalog user", CatalogView.class)};
+
+        } else {
+            return new Tab[]{createTab("Catalog products", CatalogView.class), createTab("User settings", UserView.class), createTab("Address", AddressView.class)};
+
+        }
     }
 
     private static Tab createTab(String text, Class<? extends Component> navigationTarget) {

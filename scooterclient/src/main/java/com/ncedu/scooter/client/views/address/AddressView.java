@@ -2,8 +2,8 @@ package com.ncedu.scooter.client.views.address;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.ncedu.scooter.client.model.Address;
-import com.ncedu.scooter.client.model.AddressRequest;
-import com.ncedu.scooter.client.model.AuthResponse;
+import com.ncedu.scooter.client.model.request.AddressRequest;
+import com.ncedu.scooter.client.model.request.AuthResponse;
 import com.ncedu.scooter.client.model.User;
 import com.ncedu.scooter.client.service.UserService;
 import com.ncedu.scooter.client.views.main.ViewCatalog;
@@ -41,24 +41,33 @@ public class AddressView extends Div {
     public AddressView(UserService userService) throws JsonProcessingException {
         addClassName("address-view");
         add(createFormLayout());
-        add(createGrid(userService));
+       // add(createGrid(userService));
+        add(addressGrid);
         add(createButtonLayout());
+        ArrayList<Address> addressResponse = userService.getAllAddress(user.getLogin(), token);
+        addressGrid.setItems(addressResponse);
+        addressGrid.removeAllColumns();
+        addressGrid.addColumn(address -> address.getAddress()).setHeader("Addresses");
+
         addressGrid.addItemClickListener(event -> {
-                    Address address = event.getItem();
+
                     Dialog dialog = new Dialog();
                     Button close = new Button("Cancel", e -> {
                         dialog.close();
                     });
                     Button delete = new Button("Delete", e -> {
                         Dialog deleteDialog = new Dialog();
-                        deleteDialog.add(new Text("Точно уверена?"));
+                        deleteDialog.add(new Text("Are you sure?"));
                         Button no = new Button("No", buttonClickEvent -> deleteDialog.close());
                         Button yes = new Button("Yes, detele");
                         yes.addClickListener(eventDelete -> {
-                            String response = userService.deleteAddress(address, token);
+                            String response = userService.deleteAddress(event.getItem(), token);
                             if (response.equals("OK")) {
-                                Notification.show("Done, refresh the page.", 1000, Notification.Position.MIDDLE);
+                                Notification.show("Done!", 1000, Notification.Position.MIDDLE);
+                                addressResponse.remove(event.getItem());
+                                addressGrid.setItems(addressResponse);
                                 deleteDialog.close();
+                                dialog.close();
                             } else {
                                 Notification.show("An error occurred.Try again.", 1500, Notification.Position.MIDDLE);
 
@@ -68,7 +77,7 @@ public class AddressView extends Div {
                         deleteDialog.open();
 
                     });
-                    dialog.add(new Text(address.getAddress()));
+                    dialog.add(new Text(event.getItem().getAddress()));
                     dialog.add(new Div(close, delete));
                     dialog.open();
                 }
@@ -83,9 +92,11 @@ public class AddressView extends Div {
             Button save = new Button("Save", event -> {
 
                 String newAddressValue = newAddress.getValue();
-                String response = userService.addUserAddress(new AddressRequest(newAddressValue, user.getLogin()), token);
-                if (response.equals("OK")) {
-                    Notification.show("Done, refresh the page.", 2500, Notification.Position.MIDDLE);
+                Address response = userService.addUserAddress(new AddressRequest(newAddressValue, user.getLogin()), token);
+                if (response != null) {
+                    Notification.show("Done!", 2500, Notification.Position.MIDDLE);
+                    addressResponse.add(response);
+                    addressGrid.setItems(addressResponse);
                     dialog.close();
                 } else {
                     Notification.show("An error occurred.Try again.", 4000, Notification.Position.MIDDLE);

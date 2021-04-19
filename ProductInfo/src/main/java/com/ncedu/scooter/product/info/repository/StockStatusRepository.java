@@ -9,5 +9,6 @@ import java.util.ArrayList;
 @Repository
 public interface StockStatusRepository extends CrudRepository<StockStatus, Integer> {
     StockStatus findById(int id);
-    ArrayList<StockStatus> findAllStockStatus();
+    ArrayList<StockStatus> findAll();
+
 }

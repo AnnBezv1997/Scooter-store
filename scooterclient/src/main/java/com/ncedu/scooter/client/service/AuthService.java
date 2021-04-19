@@ -1,14 +1,16 @@
 package com.ncedu.scooter.client.service;
 
-import com.ncedu.scooter.client.model.AuthRequest;
-import com.ncedu.scooter.client.model.AuthResponse;
+import com.ncedu.scooter.client.model.request.AuthRequest;
+import com.ncedu.scooter.client.model.request.AuthResponse;
 import com.ncedu.scooter.client.service.RestTemplate.ScooterRestTemplate;
 import org.springframework.stereotype.Service;
 
-import static com.ncedu.scooter.client.service.Url.AUTH_URL;
+import static com.ncedu.scooter.client.service.Url.URL;
+
 
 @Service
 public class AuthService {
+
     private ScooterRestTemplate scooterRestTemplate;
 
     public AuthService(ScooterRestTemplate scooterRestTemplate) {
@@ -17,6 +19,6 @@ public class AuthService {
 
     public AuthResponse auth(AuthRequest authRequest) {
 
-        return scooterRestTemplate.post(AUTH_URL, AuthResponse.class, authRequest).getBody();
+        return scooterRestTemplate.post(URL.get("AUTH_URL"), AuthResponse.class, authRequest).getBody();
     }
 }

@@ -8,9 +8,9 @@ CREATE TABLE role
 );
 DROP TABLE IF EXISTS user_account CASCADE;
 CREATE TABLE user_account (
-    id   bigserial not null
+    id   serial not null
          constraint user_pk
-                primary key,
+                primary key ,
     login character varying(500),
     password character varying(255),
     name character varying(300),
@@ -18,6 +18,8 @@ CREATE TABLE user_account (
             constraint user_role_id_fk
             references role
 );
+DROP SEQUENCE IF EXISTS user_account_id_seq CASCADE;
+CREATE SEQUENCE user_account_id_seq START WITH 3 INCREMENT BY 1;
 DROP TABLE IF EXISTS address;
 CREATE TABLE address (
     id   bigserial not null
