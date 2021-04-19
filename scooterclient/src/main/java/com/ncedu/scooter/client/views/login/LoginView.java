@@ -1,7 +1,8 @@
 package com.ncedu.scooter.client.views.login;
 
-import com.ncedu.scooter.client.model.AuthRequest;
-import com.ncedu.scooter.client.model.AuthResponse;
+import com.ncedu.scooter.client.model.User;
+import com.ncedu.scooter.client.model.request.AuthRequest;
+import com.ncedu.scooter.client.model.request.AuthResponse;
 import com.ncedu.scooter.client.service.AuthService;
 import com.ncedu.scooter.client.views.main.MainViewAuth;
 import com.vaadin.flow.component.Component;
@@ -56,8 +57,15 @@ public class LoginView extends Div {
                 VaadinSession.getCurrent().setAttribute("authResponse", authResponse);
                 VaadinSession.getCurrent().setAttribute("token", authResponse.getToken());
                 VaadinSession.getCurrent().getSession().setMaxInactiveInterval(3600); //длительность сессии час
+
+                User user = authResponse.getUser();
                 save.getUI().ifPresent(ui -> {
-                    ui.navigate("user");
+                    if (user.getRole().getName().equals("ROLE_ADMIN")) {
+                        ui.navigate("admin");
+                    } else {
+                        ui.navigate("catalog");
+                    }
+
                     //здесь будет переходить на страницу каталога
                 });
                 clearForm();

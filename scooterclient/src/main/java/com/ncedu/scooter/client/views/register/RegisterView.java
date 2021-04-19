@@ -1,7 +1,7 @@
 package com.ncedu.scooter.client.views.register;
 
 
-import com.ncedu.scooter.client.model.RegistrationRequest;
+import com.ncedu.scooter.client.model.request.RegistrationRequest;
 import com.ncedu.scooter.client.service.RegistrationService;
 import com.ncedu.scooter.client.views.main.MainViewAuth;
 import com.vaadin.flow.component.Component;

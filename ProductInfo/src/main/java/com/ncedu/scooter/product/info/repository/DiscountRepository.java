@@ -11,5 +11,5 @@ import java.util.ArrayList;
 public interface DiscountRepository extends CrudRepository<Discount, Integer> {
     Discount findById(int id);
 
-    ArrayList<Discount> findAllDiscount();
+    ArrayList<Discount> findAll();
 }

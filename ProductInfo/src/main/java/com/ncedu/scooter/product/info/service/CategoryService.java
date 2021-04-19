@@ -1,12 +1,15 @@
 package com.ncedu.scooter.product.info.service;
 
 import com.ncedu.scooter.product.info.entity.Category;
-import com.ncedu.scooter.product.info.exception.CategoryNotFound;
+import com.ncedu.scooter.product.info.entity.Product;
+import com.ncedu.scooter.product.info.exception.ExceptionNotFound;
 import com.ncedu.scooter.product.info.repository.CategoryRepository;
+import com.ncedu.scooter.product.info.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static com.ncedu.scooter.product.info.exception.ExceptionMessage.CATEGORY_NOT_FOUND;
 
@@ -14,42 +17,42 @@ import static com.ncedu.scooter.product.info.exception.ExceptionMessage.CATEGORY
 public class CategoryService {
     @Autowired
     CategoryRepository categoryRepository;
-
-    public Category findById(int id) throws CategoryNotFound {
-        Category category = categoryRepository.findById(id);
-        if (category != null) {
-            return category;
-        } else {
-            throw new CategoryNotFound(CATEGORY_NOT_FOUND);
-        }
-    }
+    @Autowired
+    ProductRepository productRepository;
 
     public ArrayList<Category> getAllCategory() {
-        return categoryRepository.findAllCategory();
+        return categoryRepository.findAll();
     }
 
     public boolean saveCategory(Category category) {
-        Category c = categoryRepository.findById((int) category.getId());
-        if (c != null) {
-            return false;
+        Category newCategory = new Category();
+        newCategory.setName(category.getName());
+        newCategory.setDescription(category.getDescription());
+        newCategory.setCategoryParent(category.getCategoryParent());
+        categoryRepository.save(newCategory);
+        return true;
+    }
+
+    public boolean updateCategory(Category category) throws ExceptionNotFound {
+        Category categ = categoryRepository.findById(category.getId().intValue());
+        if (categ == null) {
+            throw new ExceptionNotFound(CATEGORY_NOT_FOUND);
         } else {
-            categoryRepository.save(c);
+            categoryRepository.save(category);
             return true;
         }
     }
 
-    public boolean updateCategory(Category category) {
-        Category c = new Category(category.getId(), category.getName(), category.getDescription(),
-                category.getCategoryParent());
-        categoryRepository.save(c);
-        return true;
-    }
-
-    public boolean deleteCategory(int id) {
+    public boolean deleteCategory(int id) throws ExceptionNotFound {
         Category c = categoryRepository.findById(id);
-        if (c != null) {
-            return false;
+        if (c == null) {
+            throw new ExceptionNotFound(CATEGORY_NOT_FOUND);
         } else {
+            List<Product> productList = productRepository.findByCategoryId(id);
+            for (Product p : productList) {
+                p.setDiscount(null);
+                productRepository.save(p);
+            }
             categoryRepository.delete(c);
             return true;
         }

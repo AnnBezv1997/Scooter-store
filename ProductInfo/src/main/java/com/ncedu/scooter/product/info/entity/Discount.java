@@ -3,16 +3,11 @@ package com.ncedu.scooter.product.info.entity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Type;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.Id;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
+import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
-import javax.persistence.Enumerated;
-import javax.persistence.EnumType;
 import java.math.BigDecimal;
 
 @Schema(description = "Entity Discount")
@@ -20,25 +15,30 @@ import java.math.BigDecimal;
 @Table(name = "discount")
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
+
 public class Discount {
 
     @Column(name = "id")
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @SequenceGenerator(name = "discountIdSeq", sequenceName = "discount_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "discountIdSeq")
     @Schema(description = "Id")
-    @NotEmpty
     private Integer id;
 
     @Column(name = "name")
     @NotEmpty
+
     private String name;
     @Column(name = "description")
     @NotEmpty
+
     private String description;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type")
-    private  DiscountType discountType;
+    @Type(type = "com.ncedu.scooter.product.info.service.EnumTypePostgreSql")
+    private DiscountType discountType;
 
     @Column(name = "value")
     private BigDecimal value;

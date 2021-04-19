@@ -1,6 +1,10 @@
 package com.ncedu.scooter.client.views.user;
 
-import com.ncedu.scooter.client.model.*;
+import com.ncedu.scooter.client.model.User;
+import com.ncedu.scooter.client.model.request.AuthRequest;
+import com.ncedu.scooter.client.model.request.AuthResponse;
+import com.ncedu.scooter.client.model.request.NameAddRequest;
+import com.ncedu.scooter.client.model.request.UpdateLoginRequest;
 import com.ncedu.scooter.client.service.AuthService;
 import com.ncedu.scooter.client.service.UserService;
 import com.ncedu.scooter.client.views.main.ViewCatalog;
@@ -13,7 +17,6 @@ import com.vaadin.flow.component.customfield.CustomField;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
-import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.notification.Notification;
@@ -25,7 +28,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
-
 
 
 @Route(value = "user", layout = ViewCatalog.class)
@@ -64,7 +66,7 @@ public class UserView extends Div {
                     VaadinSession.getCurrent().setAttribute("token", authResponse.getToken());
                     user = authResponse.getUser();
                     token = authResponse.getToken();
-                    Notification.show("Done, refresh the page.", 1000, Notification.Position.MIDDLE);
+                    phones.setText("Your phone number: " + user.getLogin() + ". Click to change");
                     dialog.close();
                 } else {
                     Notification.show("An error occurred.Try again.", 1500, Notification.Position.MIDDLE);
@@ -86,30 +88,29 @@ public class UserView extends Div {
         name.addClickListener(e -> {
 
             Dialog dialog = new Dialog();
-            TextField name = new TextField("Name");
+            TextField newNameSub = new TextField("Name");
             Button close = new Button("Cancel", event -> {
 
                 dialog.close();
             });
             Button save = new Button("Save", event -> {
 
-                String newName = name.getValue();
-                String response = userService.addUserName(new NameAddRequest(newName, user.getLogin()), token);
-                if (response.equals("OK")) {
+                String newName = newNameSub.getValue();
+                User response = userService.addUserName(new NameAddRequest(newName, user.getLogin()), token);
+                if (response != null) {
                     user.setName(newName);
+                    name.setText("Your name: " + response.getName() + ". Click to change");
                     dialog.close();
                 } else {
                     Notification.show("An error occurred.Try again.", 4000, Notification.Position.MIDDLE);
 
                 }
-
             }
             );
             dialog.add(new Text("Add your name"));
-            dialog.add(new Div(name));
+            dialog.add(new Div(newNameSub));
             dialog.add(new Div(close, save));
             dialog.open();
-
 
         });
         address.addClickListener(e -> {
