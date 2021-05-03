@@ -25,7 +25,9 @@ public class ProductService {
     ProductRepoPagination productRepoPagination;
     @Autowired
     StockStatusRepository stockStatusRepository;
-
+    public Product getProduct(int id){
+        return productRepository.findById(id);
+    }
     public Page<Product> pageProduct(ProductRequest productRequest) {
         if (!productRequest.getSearch().isEmpty()) {
             return search(productRequest);

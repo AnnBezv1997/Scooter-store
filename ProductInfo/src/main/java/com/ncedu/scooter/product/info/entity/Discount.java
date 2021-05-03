@@ -28,11 +28,10 @@ public class Discount {
 
     @Column(name = "name")
     @NotEmpty
-
     private String name;
+
     @Column(name = "description")
     @NotEmpty
-
     private String description;
 
     @Enumerated(EnumType.STRING)

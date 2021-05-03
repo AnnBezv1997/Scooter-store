@@ -1,6 +1,6 @@
 package com.ncedu.scooter.client.service;
 
-import com.ncedu.scooter.client.model.request.RegistrationRequest;
+import com.ncedu.scooter.client.model.request.user.RegistrationRequest;
 import com.ncedu.scooter.client.service.RestTemplate.ScooterRestTemplate;
 import org.springframework.stereotype.Service;
 

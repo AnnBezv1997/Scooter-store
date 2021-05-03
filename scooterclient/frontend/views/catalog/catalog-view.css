@@ -1,32 +1,4 @@
-/*.catalog-view {
 
-    display: block;
-    margin: 0 auto;
-    width: 1100px;
-    padding: 0 var(--lumo-space-l);
-    text-align: center;
-
-}
-.catalog-view .button-layout {
-    margin-bottom: var(--lumo-space-l);
-    margin-top: var(--lumo-space-m);
-    display: flex;
-    justify-content: center;
-
-}
-.v-Notification.mystyle {
-    margin-bottom: var(--lumo-space-l);
-    margin-top: var(--lumo-space-m);
-    display: flex;
-    justify-content: center;
-}
-vaadin-grid vaadin-grid-cell-content img {
-    max-height: 6em;
-}
-vaadin-grid vaadin-grid init {
-    max-width: 1000px;
-}
-*/
 .catalog-view {
     display: block;
     height: 100%;
@@ -41,11 +13,11 @@ vaadin-grid vaadin-grid init {
 .catalog-view vaadin-grid-filter > * {
     width: 100%;
 }
-.catalog-view vaadin-grid-pro vaadin-horizontal-layout {
+.catalog-view vaadin-grid vaadin-horizontal-layout {
     align-items: center;
 }
-.catalog-view vaadin-grid-pro img {
-    max-height: 6em;
+.catalog-view vaadin-grid img {
+    max-height: 7em;
 }
 .catalog-view .name {
     overflow: hidden;

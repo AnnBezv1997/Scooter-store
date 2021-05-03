@@ -1,12 +1,14 @@
 package com.ncedu.scooter.client.views.catalog;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.ncedu.scooter.client.model.Category;
-import com.ncedu.scooter.client.model.Product;
-import com.ncedu.scooter.client.model.User;
-import com.ncedu.scooter.client.model.request.AuthResponse;
-import com.ncedu.scooter.client.model.request.ProductRequest;
-import com.ncedu.scooter.client.model.request.ProductResponse;
+import com.ncedu.scooter.client.model.order.Basket;
+import com.ncedu.scooter.client.model.product.Category;
+import com.ncedu.scooter.client.model.product.Product;
+import com.ncedu.scooter.client.model.request.product.ProductRequest;
+import com.ncedu.scooter.client.model.request.product.ProductResponse;
+import com.ncedu.scooter.client.model.request.user.AuthResponse;
+import com.ncedu.scooter.client.model.user.User;
+import com.ncedu.scooter.client.service.OrderService;
 import com.ncedu.scooter.client.service.ProductService;
 import com.ncedu.scooter.client.views.main.ViewCatalog;
 import com.vaadin.flow.component.ClickEvent;
@@ -19,7 +21,6 @@ import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.HeaderRow;
-import com.vaadin.flow.component.gridpro.GridPro;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Image;
@@ -29,6 +30,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -39,7 +41,9 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Date;
 
 @Route(value = "catalog", layout = ViewCatalog.class)
 @PageTitle("Catalog")
@@ -49,7 +53,7 @@ public class CatalogView extends Div {
     private AuthResponse authResponse = (AuthResponse) VaadinSession.getCurrent().getAttribute("authResponse");
     private String token = (String) VaadinSession.getCurrent().getAttribute("token");
     private User user = authResponse.getUser();
-    private GridPro<Product> productGrid = new GridPro<>(Product.class);
+    private Grid<Product> productGrid = new Grid<>(Product.class);
     private ListDataProvider<Product> dataProvider;
     private Grid.Column<Product> product;
     private Grid.Column<Product> description;
@@ -64,9 +68,9 @@ public class CatalogView extends Div {
     private String sortBy = ""; //по цене
     private String search = "";  // если был введено в поиск что то
 
-    private Integer sizeElement = 2;//размер страницы
+    private Integer sizeElement = 2;
 
-    public CatalogView(ProductService productService) throws JsonProcessingException {
+    public CatalogView(ProductService productService, OrderService orderService) throws JsonProcessingException {
         addClassName("catalog-view");
         add(createSearchBar(productService));
         createDataProvider(productService);
@@ -100,7 +104,7 @@ public class CatalogView extends Div {
 
         productGrid.addItemClickListener(event -> {
             Product showProduct = event.getItem();
-            pageProduct(showProduct);
+            pageProduct(showProduct, orderService);
 
         });
 
@@ -158,12 +162,12 @@ public class CatalogView extends Div {
             Product product1 = product;
             if (product1.getDiscount() != null) {
                 if (product1.getDiscount().getDiscountType().toString().equals("ABSOLUTE")) {
-                    BigDecimal p = product1.getPrice().subtract(product1.getDiscount().getValue());
-                    span1.setText("New price:" + p.doubleValue() + "P.");
+                    BigDecimal p = product1.getPrice().subtract(product1.getDiscount().getValue()).setScale(0, RoundingMode.HALF_UP);
+                    span1.setText("New price:" + p + "P.");
                     span2.setText("Old price:" + product1.getPrice() + "P.");
                 } else {
-                    BigDecimal p = product1.getPrice().subtract(product1.getPrice().multiply(new BigDecimal(product1.getDiscount().getValue().doubleValue() / 100)));
-                    span1.setText("New price:" + p.doubleValue() + "P.");
+                    BigDecimal p = product1.getPrice().subtract(product1.getPrice().multiply(new BigDecimal(product1.getDiscount().getValue().doubleValue() / 100))).setScale(0, RoundingMode.HALF_UP);
+                    span1.setText("New price:" + p + "P.");
                     span2.setText("Old price:" + product1.getPrice() + "P.");
                 }
 
@@ -209,7 +213,7 @@ public class CatalogView extends Div {
         return searchBar;
     }
 
-    private void pageProduct(Product showProduct) {
+    private void pageProduct(Product showProduct, OrderService orderService) {
         Dialog dialog = new Dialog();
         dialog.setWidth("600px");
 
@@ -225,11 +229,25 @@ public class CatalogView extends Div {
         Span price = new Span();
         Span stockStatus = new Span();
 
-        name.setText(showProduct.getName());
-        description.setText(showProduct.getDescription());
-        category.setText(showProduct.getCategory().getName());
+        name.setText("Name : " + showProduct.getName());
+        description.setText("Description : " + showProduct.getDescription());
+        category.setText("Category : " + showProduct.getCategory().getName());
         descriptionCategory.setText(showProduct.getCategory().getDescription());
-        price.setText(showProduct.getPrice().toString());
+        BigDecimal p;
+        if (showProduct.getDiscount() != null) {
+            if (showProduct.getDiscount().getDiscountType().toString().equals("ABSOLUTE")) {
+                p = showProduct.getPrice().subtract(showProduct.getDiscount().getValue()).setScale(0, RoundingMode.HALF_UP);
+                price.setText("Price : " + p + "Р");
+            } else {
+                p = showProduct.getPrice().subtract(showProduct.getPrice().multiply(new BigDecimal(showProduct.getDiscount().getValue().doubleValue() / 100))).setScale(0, RoundingMode.HALF_UP);
+                price.setText("Price : " + p + "Р");
+            }
+
+        } else {
+            p = showProduct.getPrice();
+            price.setText("Price : " + p.doubleValue() + "Р");
+        }
+
         if (showProduct.getStockStatus().getCount() > 0) {
             stockStatus.setText("In stock");
         } else {
@@ -239,6 +257,29 @@ public class CatalogView extends Div {
         Button close = new Button("Cancel", e -> {
             dialog.close();
         });
+        if (!user.getRole().getName().equals("ROLE_ADMIN")) {
+            NumberField countProduct = new NumberField();
+            countProduct.setValue(1d);
+            countProduct.setHasControls(true);
+            countProduct.setMin(1);
+            countProduct.setMax(showProduct.getStockStatus().getCount());
+
+            Button addToBasket = new Button("Add to basket", e -> {
+                Basket basket = new Basket();
+                basket.setUserId(user.getId());
+                basket.setUserOrder(null);
+                basket.setProductId(showProduct.getId());
+                basket.setPrice(new BigDecimal(p.doubleValue()));
+                basket.setCountProduct(countProduct.getValue().intValue());
+                basket.setDate(new Date());
+                boolean add = orderService.addProductBasket(basket, token);
+                if (add) {
+                    Notification.show("Product added, go to the shopping cart!", 1000, Notification.Position.MIDDLE);
+                }
+            });
+            dialog.add(new Div(addToBasket, countProduct));
+        }
+
         dialog.add(verticalLayout);
         dialog.add(new Div(close));
         dialog.open();

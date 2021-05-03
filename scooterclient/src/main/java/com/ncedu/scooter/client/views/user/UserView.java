@@ -1,10 +1,10 @@
 package com.ncedu.scooter.client.views.user;
 
-import com.ncedu.scooter.client.model.User;
-import com.ncedu.scooter.client.model.request.AuthRequest;
-import com.ncedu.scooter.client.model.request.AuthResponse;
-import com.ncedu.scooter.client.model.request.NameAddRequest;
-import com.ncedu.scooter.client.model.request.UpdateLoginRequest;
+import com.ncedu.scooter.client.model.user.User;
+import com.ncedu.scooter.client.model.request.user.AuthRequest;
+import com.ncedu.scooter.client.model.request.user.AuthResponse;
+import com.ncedu.scooter.client.model.request.user.NameAddRequest;
+import com.ncedu.scooter.client.model.request.user.UpdateLoginRequest;
 import com.ncedu.scooter.client.service.AuthService;
 import com.ncedu.scooter.client.service.UserService;
 import com.ncedu.scooter.client.views.main.ViewCatalog;

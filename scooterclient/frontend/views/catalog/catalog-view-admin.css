@@ -5,17 +5,17 @@
     padding: 0 var(--lumo-space-l);
     text-align: center;
 }
-.catalog-view-admin vaadin-grid-pro {
+.catalog-view-admin vaadin-grid {
     height: 100%;
 }
 .catalog-view-admin vaadin-grid-filter,
 .catalog-view-admin vaadin-grid-filter > * {
     width: 100%;
 }
-.catalog-view-admin vaadin-grid-pro vaadin-horizontal-layout {
+.catalog-view-admin vaadin-grid vaadin-horizontal-layout {
     align-items: center;
 }
-.catalog-view-admin vaadin-grid-pro img {
+.catalog-view-admin vaadin-grid img {
     max-height: 6em;
 }
 .catalog-view-admin .name {

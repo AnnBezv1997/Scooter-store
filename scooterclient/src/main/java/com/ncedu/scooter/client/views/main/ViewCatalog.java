@@ -1,10 +1,12 @@
 package com.ncedu.scooter.client.views.main;
 
-import com.ncedu.scooter.client.model.User;
-import com.ncedu.scooter.client.model.request.AuthResponse;
+import com.ncedu.scooter.client.model.user.User;
+import com.ncedu.scooter.client.model.request.user.AuthResponse;
 import com.ncedu.scooter.client.views.address.AddressView;
 import com.ncedu.scooter.client.views.catalog.CatalogView;
 import com.ncedu.scooter.client.views.catalog.CatalogViewAdmin;
+import com.ncedu.scooter.client.views.order.BasketView;
+import com.ncedu.scooter.client.views.order.OrderView;
 import com.ncedu.scooter.client.views.user.UserView;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentUtil;
@@ -88,7 +90,9 @@ public class ViewCatalog extends AppLayout {
             return new Tab[]{createTab("Catalog Settings", CatalogViewAdmin.class), createTab("Catalog user", CatalogView.class)};
 
         } else {
-            return new Tab[]{createTab("Catalog products", CatalogView.class), createTab("User settings", UserView.class), createTab("Address", AddressView.class)};
+            return new Tab[]{createTab("Catalog products", CatalogView.class), createTab("User settings", UserView.class),
+                    createTab("Address", AddressView.class), createTab("Basket", BasketView.class),
+                    createTab("Order", OrderView.class)};
 
         }
     }
