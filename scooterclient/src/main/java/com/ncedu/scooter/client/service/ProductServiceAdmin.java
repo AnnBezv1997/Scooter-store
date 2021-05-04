@@ -3,12 +3,12 @@ package com.ncedu.scooter.client.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ncedu.scooter.client.model.Category;
-import com.ncedu.scooter.client.model.Discount;
-import com.ncedu.scooter.client.model.Product;
-import com.ncedu.scooter.client.model.StockStatus;
-import com.ncedu.scooter.client.model.request.ProductRequest;
-import com.ncedu.scooter.client.model.request.ProductResponse;
+import com.ncedu.scooter.client.model.product.Category;
+import com.ncedu.scooter.client.model.product.Discount;
+import com.ncedu.scooter.client.model.product.Product;
+import com.ncedu.scooter.client.model.product.StockStatus;
+import com.ncedu.scooter.client.model.request.product.ProductRequest;
+import com.ncedu.scooter.client.model.request.product.ProductResponse;
 import com.ncedu.scooter.client.service.RestTemplate.ScooterRestTemplate;
 import org.springframework.stereotype.Service;
 
@@ -88,12 +88,6 @@ public class ProductServiceAdmin {
     public boolean saveCategory(Category category, String token) {
 
         return scooterRestTemplate.post(URL.get("ADMIN_ADD_CATEGORY"), boolean.class, category, token).getBody();
-    }
-
-    public boolean saveTest(Object o, String token) throws JsonProcessingException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        String obj = objectMapper.writeValueAsString(o);
-        return scooterRestTemplate.post(URL.get("ADMIN_ADD"), boolean.class, obj, token).getBody();
     }
 
 

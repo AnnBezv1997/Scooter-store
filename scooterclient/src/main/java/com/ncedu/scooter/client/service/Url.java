@@ -16,6 +16,7 @@ public final class Url {
         URL.put("ALL_ADDRESS", "/gateway/user/address/");
         URL.put("USER", "/gateway/user/");
         //Product
+        URL.put("PRODUCT_ID", "/product/user/product/");
         URL.put("CATEGORIES_PRODUCTS", "/product/user/categories");
         URL.put("PAGE_PRODUCTS", "/product/user/page/products");
         //Product admin
@@ -36,8 +37,17 @@ public final class Url {
         URL.put("ADMIN_ADD_CATEGORY", "/product/admin/add/category");
         URL.put("ADMIN_ADD_STOCK_STATUS", "/product/admin/add/status");
         URL.put("ADMIN_ADD_DISCOUNT", "/product/admin/add/discount");
-
-        URL.put("ADMIN_ADD", "/product/admin/add");
+        //Basket
+        URL.put("PRODUCT_BASKET", "/order/basket/products");
+        URL.put("ADD_PRODUCT_BASKET", "/order/add/product");
+        URL.put("DELETE_PRODUCT_BASKET", "/order/delete/product");
+        URL.put("UPDATE_COUNT_PRODUCT", "/order/update/count");
+        URL.put("TOTAL_PRICE", "/order/total/price/");
+        //Order
+        URL.put("ORDERS", "/order/");
+        URL.put("ORDER_CREATE", "/order/create");
+        URL.put("ORDER_DELETE", "/order/delete");
+        URL.put("ORDER_UPDATE", "/order/update");
 
     }
 }

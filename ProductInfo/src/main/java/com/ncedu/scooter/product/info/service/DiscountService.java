@@ -1,6 +1,5 @@
 package com.ncedu.scooter.product.info.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.ncedu.scooter.product.info.entity.Discount;
 import com.ncedu.scooter.product.info.entity.Product;
 import com.ncedu.scooter.product.info.exception.ExceptionNotFound;
@@ -35,7 +34,7 @@ public class DiscountService {
         return true;
     }
 
-    public boolean updateDiscount(Discount discount) throws ExceptionNotFound{
+    public boolean updateDiscount(Discount discount) throws ExceptionNotFound {
         Discount disc = discountRepository.findById(discount.getId().intValue());
         if(disc == null){
             throw new ExceptionNotFound(DISCONT_NOT_FOUND);
@@ -45,7 +44,7 @@ public class DiscountService {
         }
     }
 
-    public boolean deleteDiscount(int id) throws ExceptionNotFound{
+    public boolean deleteDiscount(int id) throws ExceptionNotFound {
         Discount d = discountRepository.findById(id);
         if (d == null) {
             throw new ExceptionNotFound(DISCONT_NOT_FOUND);

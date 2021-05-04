@@ -1,0 +1,33 @@
+.basket-view {
+    display: block;
+    height: 100%;
+    margin: 0 auto;
+    padding: 0 var(--lumo-space-l);
+    text-align: center;
+}
+.basket-view vaadin-grid-pro {
+    height: 100%;
+}
+.basket-view vaadin-grid-filter,
+.basket-view vaadin-grid-filter > * {
+    width: 100%;
+}
+.basket-view vaadin-grid vaadin-horizontal-layout {
+    align-items: center;
+}
+.basket-view vaadin-grid img {
+    max-height: 2em;
+}
+.basket-view .name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.basket-view .dialog{
+    width: 500px;
+}
+.basket-view .button-layout {
+    margin-bottom: var(--lumo-space-l);
+    margin-top: var(--lumo-space-m);
+    display: flex;
+    justify-content: center;
+}

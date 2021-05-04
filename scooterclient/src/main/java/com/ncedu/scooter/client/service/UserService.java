@@ -3,11 +3,11 @@ package com.ncedu.scooter.client.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ncedu.scooter.client.model.Address;
-import com.ncedu.scooter.client.model.request.AddressRequest;
-import com.ncedu.scooter.client.model.request.NameAddRequest;
-import com.ncedu.scooter.client.model.request.UpdateLoginRequest;
-import com.ncedu.scooter.client.model.User;
+import com.ncedu.scooter.client.model.user.Address;
+import com.ncedu.scooter.client.model.request.user.AddressRequest;
+import com.ncedu.scooter.client.model.request.user.NameAddRequest;
+import com.ncedu.scooter.client.model.request.user.UpdateLoginRequest;
+import com.ncedu.scooter.client.model.user.User;
 import com.ncedu.scooter.client.service.RestTemplate.ScooterRestTemplate;
 import org.springframework.stereotype.Service;
 

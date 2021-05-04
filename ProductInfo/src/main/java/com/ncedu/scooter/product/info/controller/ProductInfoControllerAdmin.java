@@ -138,12 +138,4 @@ public class ProductInfoControllerAdmin {
 
     }
 
-
-
-    @PostMapping("/add")
-    public boolean create(@RequestBody @Valid String o) throws JsonProcessingException{
-        ObjectMapper objectMapper = new ObjectMapper();
-        return false;
-
-    }
 }

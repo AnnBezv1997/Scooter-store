@@ -1,10 +1,11 @@
 package com.ncedu.scooter.client.views.catalog;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.ncedu.scooter.client.model.*;
-import com.ncedu.scooter.client.model.request.AuthResponse;
-import com.ncedu.scooter.client.model.request.ProductRequest;
-import com.ncedu.scooter.client.model.request.ProductResponse;
+import com.ncedu.scooter.client.model.product.*;
+import com.ncedu.scooter.client.model.request.user.AuthResponse;
+import com.ncedu.scooter.client.model.request.product.ProductRequest;
+import com.ncedu.scooter.client.model.request.product.ProductResponse;
+import com.ncedu.scooter.client.model.user.User;
 import com.ncedu.scooter.client.service.ProductServiceAdmin;
 import com.ncedu.scooter.client.views.main.ViewCatalog;
 import com.vaadin.flow.component.ClickEvent;
@@ -48,7 +49,7 @@ public class CatalogViewAdmin extends Div {
     private AuthResponse authResponse = (AuthResponse) VaadinSession.getCurrent().getAttribute("authResponse");
     private String token = (String) VaadinSession.getCurrent().getAttribute("token");
     private User user = authResponse.getUser();
-    private GridPro<Product> productGrid = new GridPro<>(Product.class);
+    private Grid<Product> productGrid = new Grid<>(Product.class);
     private Grid<Discount> discountGrid = new Grid<>();
     private Grid<Category> categoryGrid = new Grid<>();
     private ListDataProvider<Product> dataProvider;

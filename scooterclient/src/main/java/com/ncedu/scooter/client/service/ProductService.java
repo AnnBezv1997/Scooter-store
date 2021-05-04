@@ -3,9 +3,9 @@ package com.ncedu.scooter.client.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ncedu.scooter.client.model.Category;
-import com.ncedu.scooter.client.model.request.ProductRequest;
-import com.ncedu.scooter.client.model.request.ProductResponse;
+import com.ncedu.scooter.client.model.product.Category;
+import com.ncedu.scooter.client.model.request.product.ProductRequest;
+import com.ncedu.scooter.client.model.request.product.ProductResponse;
 import com.ncedu.scooter.client.service.RestTemplate.ScooterRestTemplate;
 import org.springframework.stereotype.Service;
 

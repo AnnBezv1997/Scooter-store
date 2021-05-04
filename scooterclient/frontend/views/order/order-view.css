@@ -1,0 +1,33 @@
+.order-view {
+    display: block;
+    height: 100%;
+    margin: 0 auto;
+    padding: 0 var(--lumo-space-l);
+    text-align: center;
+}
+.order-view vaadin-grid {
+    height: 100%;
+}
+.order-view vaadin-grid-filter,
+.order-view vaadin-grid-filter > * {
+    width: 100%;
+}
+.order-view vaadin-grid vaadin-horizontal-layout {
+    align-items: center;
+}
+.order-view vaadin-grid img {
+    max-height: 2em;
+}
+.order-view .name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.order-view .dialog{
+    width: 500px;
+}
+.order-view .button-layout {
+    margin-bottom: var(--lumo-space-l);
+    margin-top: var(--lumo-space-m);
+    display: flex;
+    justify-content: center;
+}

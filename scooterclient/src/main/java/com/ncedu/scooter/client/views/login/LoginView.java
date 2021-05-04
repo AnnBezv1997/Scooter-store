@@ -1,8 +1,8 @@
 package com.ncedu.scooter.client.views.login;
 
-import com.ncedu.scooter.client.model.User;
-import com.ncedu.scooter.client.model.request.AuthRequest;
-import com.ncedu.scooter.client.model.request.AuthResponse;
+import com.ncedu.scooter.client.model.user.User;
+import com.ncedu.scooter.client.model.request.user.AuthRequest;
+import com.ncedu.scooter.client.model.request.user.AuthResponse;
 import com.ncedu.scooter.client.service.AuthService;
 import com.ncedu.scooter.client.views.main.MainViewAuth;
 import com.vaadin.flow.component.Component;
@@ -27,7 +27,7 @@ import com.vaadin.flow.server.VaadinSession;
 
 
 @CssImport("./views/login/login-view.css")
-@Route(value = "login", layout = MainViewAuth.class)
+@Route(value = "", layout = MainViewAuth.class)
 @PageTitle("Login")
 public class LoginView extends Div {
 
@@ -122,8 +122,10 @@ public class LoginView extends Div {
             countryCode.setPreventInvalidInput(true);
             countryCode.setItems("+7");
             countryCode.addCustomValueSetListener(e -> countryCode.setValue(e.getDetail()));
-            number.setPattern("\\d*");
+
+            number.setPattern("\\d*}");
             number.setPreventInvalidInput(true);
+
             HorizontalLayout layout = new HorizontalLayout(countryCode, number);
             layout.setFlexGrow(1.0, number);
             add(layout);

@@ -33,7 +33,7 @@ public class StockStatusService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<?> requestBody = new HttpEntity<>(status,headers);
-        StockStatus stockStatus = restTemplate.exchange(baseUrl, HttpMethod.POST, requestBody, StockStatus.class).getBody();
+       boolean b = restTemplate.exchange(baseUrl, HttpMethod.POST, requestBody, boolean.class).getBody();
         System.out.println("Scheduler working: " + status.getId() + " - " + status.getCount());
     }
 }

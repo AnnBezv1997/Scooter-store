@@ -1,10 +1,10 @@
 package com.ncedu.scooter.client.views.address;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.ncedu.scooter.client.model.Address;
-import com.ncedu.scooter.client.model.request.AddressRequest;
-import com.ncedu.scooter.client.model.request.AuthResponse;
-import com.ncedu.scooter.client.model.User;
+import com.ncedu.scooter.client.model.user.Address;
+import com.ncedu.scooter.client.model.request.user.AddressRequest;
+import com.ncedu.scooter.client.model.request.user.AuthResponse;
+import com.ncedu.scooter.client.model.user.User;
 import com.ncedu.scooter.client.service.UserService;
 import com.ncedu.scooter.client.views.main.ViewCatalog;
 import com.vaadin.flow.component.Component;
@@ -41,7 +41,6 @@ public class AddressView extends Div {
     public AddressView(UserService userService) throws JsonProcessingException {
         addClassName("address-view");
         add(createFormLayout());
-       // add(createGrid(userService));
         add(addressGrid);
         add(createButtonLayout());
         ArrayList<Address> addressResponse = userService.getAllAddress(user.getLogin(), token);
