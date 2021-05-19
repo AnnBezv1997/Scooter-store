@@ -1,7 +1,9 @@
 package com.ncedu.scooter.order.service;
 
+import com.ncedu.scooter.order.controller.request.PriceResponse;
 import com.ncedu.scooter.order.controller.request.ProductRequest;
 import com.ncedu.scooter.order.entity.Basket;
+import com.ncedu.scooter.order.controller.request.Product;
 import com.ncedu.scooter.order.entity.UserOrder;
 import com.ncedu.scooter.order.exeption.ExceptionProductQuantity;
 import com.ncedu.scooter.order.repository.BasketRepository;
@@ -18,11 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.*;
 
 import static com.ncedu.scooter.order.exeption.ExceptionMessage.PRODUCT_QUANTITY_ERROR;
 
@@ -135,16 +133,52 @@ public class BasketService {
         }
     }
 
-    public BigDecimal totalPrice(Integer userId) {
+    public PriceResponse totalPriceAndTotalDickount(Integer userId) {
         List<Basket> basketList = basketListNoOrder(userId);
+        List<Product> productList = listProductBasket(basketList);
         double totalPrice = 0;
+        double totalDiscount = 0;
         for (Basket b : basketList) {
             double p = b.getCountProduct() * b.getPrice().doubleValue();
             totalPrice += p;
         }
-        return new BigDecimal(totalPrice);
-    }
 
+        for(Basket b : basketList){
+            for(Product p : productList){
+                if(b.getProductId() == p.getId() && p.getDiscount() != null){
+                    if(p.getDiscount().getDiscountType().toString().equals("ABSOLUTE")){
+                        totalDiscount += p.getDiscount().getValue().doubleValue()*b.getCountProduct();
+                    }else {
+                        totalDiscount += p.getPrice().multiply(new BigDecimal(p.getDiscount().getValue().doubleValue() / 100)).doubleValue()*b.getCountProduct();
+                    }
+                }
+            }
+        }
+        return new PriceResponse(new BigDecimal(totalPrice), new BigDecimal(totalDiscount));
+    }
+    private Product getProduct(int id){
+        List<ServiceInstance> instances = discoveryClient.getInstances("PRODUCT_INFO");
+        ServiceInstance serviceInstance = instances.get(0);
+        String baseUrl = serviceInstance.getUri().toString();
+
+        baseUrl = baseUrl + "/user/product/" + id;
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<?> requestBody = new HttpEntity<>(headers);
+        return restTemplate.exchange(baseUrl, HttpMethod.GET, requestBody, Product.class).getBody();
+    }
+    private List<Product> listProductBasket(List<Basket> basketList){
+        List<Integer> productId = new ArrayList<>();
+        List<Product> productList = new ArrayList<>();
+        for(Basket b : basketList){
+            productId.add(b.getProductId());
+        }
+        for(Integer id : productId){
+            productList.add(getProduct(id));
+        }
+        return productList;
+    }
     public List<Basket> getProduct(ProductRequest productRequest) {
         if (productRequest.getOrderId() == null) {
             return basketListNoOrder(productRequest.getUserId());
@@ -158,8 +192,8 @@ public class BasketService {
     Каждые 6 часов проверяет как долго находится последний добавленый товар в корзине,
     если с последнего добавления в корзину прошло 14 дней, то очишает корзину этого пользователя
      */
-    // @Scheduled(cron = "0 0 0/6 * * ?")
-    @Scheduled(fixedRate = 3000)
+     @Scheduled(cron = "0 0 0/6 * * ?")
+    //@Scheduled(fixedRate = 3000)
     public void checkBasket() {
         List<Basket> allBasketList = basketRepository.findAll();
 

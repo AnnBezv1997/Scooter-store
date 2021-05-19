@@ -1,15 +1,17 @@
 package com.ncedu.scooter.client.views.user;
 
-import com.ncedu.scooter.client.model.user.User;
 import com.ncedu.scooter.client.model.request.user.AuthRequest;
 import com.ncedu.scooter.client.model.request.user.AuthResponse;
 import com.ncedu.scooter.client.model.request.user.NameAddRequest;
 import com.ncedu.scooter.client.model.request.user.UpdateLoginRequest;
+import com.ncedu.scooter.client.model.user.User;
 import com.ncedu.scooter.client.service.AuthService;
 import com.ncedu.scooter.client.service.UserService;
+import com.ncedu.scooter.client.views.catalog.ErrorView;
 import com.ncedu.scooter.client.views.main.ViewCatalog;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Text;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -19,6 +21,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -28,6 +31,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
+import static com.ncedu.scooter.client.views.user.Message.MESSAGE;
 
 
 @Route(value = "user", layout = ViewCatalog.class)
@@ -36,111 +40,141 @@ import com.vaadin.flow.server.VaadinSession;
 public class UserView extends Div {
     private AuthResponse authResponse = (AuthResponse) VaadinSession.getCurrent().getAttribute("authResponse");
     private String token = (String) VaadinSession.getCurrent().getAttribute("token");
-    private User user = authResponse.getUser();
-    private Button phones = new Button("Your phone number: " + user.getLogin() + ". Click to change");
-    private Button name = new Button("Your name: " + user.getName() + ". Click to change");
-    private Button address = new Button("Address");
-    private Button exit = new Button("Log out");
+    private User user;
+    private Button phones;
+    private Button name;
+    private Button address;
+    private Button exit;
 
     public UserView(UserService userService, AuthService authService) {
-        addClassName("user-view");
-        add(createTitle());
-        add(createFormLayout());
-        add(createButtonLayout());
-        phones.addClickListener(e -> {
+        if (authResponse == null) {
+            VerticalLayout verticalLayout = new VerticalLayout();
+            verticalLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+            Image logo = new Image("images/error.png", "ScooterClient error");
+            logo.setHeight("410px");
+            logo.setWidth("800px");
+            verticalLayout.add(logo);
+            add(verticalLayout);
+            UI.getCurrent().navigate(ErrorView.class);
 
-            Dialog dialog = new Dialog();
-            PhoneNumberField phone = new PhoneNumberField("New phone number");
-            PasswordField password = new PasswordField("Confirm your password");
-            password.setWidth("350px");
-            Button close = new Button("Cancel", event -> {
-                dialog.close();
-            });
-            Button save = new Button("Save", event -> {
-                String newPhone = phone.getValue();
-                String pass = password.getValue();
-                boolean response = userService.updateUserLogin(new UpdateLoginRequest(user.getLogin(), newPhone), token);
-                if (response) {
-                    AuthResponse authResponse = authService.auth(new AuthRequest(newPhone, pass));
-                    VaadinSession.getCurrent().setAttribute("authResponse", authResponse);
-                    VaadinSession.getCurrent().setAttribute("token", authResponse.getToken());
-                    user = authResponse.getUser();
-                    token = authResponse.getToken();
-                    phones.setText("Your phone number: " + user.getLogin() + ". Click to change");
+        } else if (authResponse.getUser().getRole().getName().equals("ROLE_ADMIN")) {
+            VerticalLayout verticalLayout = new VerticalLayout();
+            verticalLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+            Image logo = new Image("images/error.png", "ScooterClient error");
+            logo.setHeight("410px");
+            logo.setWidth("800px");
+            verticalLayout.add(logo);
+            add(verticalLayout);
+            UI.getCurrent().navigate(ErrorView.class);
+        } else {
+            user = authResponse.getUser();
+            phones = new Button("Your phone number: " + user.getLogin() + ". Click to change");
+            name = new Button("Your name: " + user.getName() + ". Click to change");
+            address = new Button("Address");
+            exit = new Button("Log out");
+
+            addClassName("user-view");
+            add(createTitle());
+            add(createFormLayout());
+            add(createButtonLayout());
+            phones.addClickListener(e -> {
+
+                Dialog dialog = new Dialog();
+                PhoneNumberField phone = new PhoneNumberField("New phone number");
+                PasswordField password = new PasswordField("Confirm your password");
+                password.setWidth("350px");
+                Button close = new Button("Cancel", event -> {
                     dialog.close();
-                } else {
-                    Notification.show("An error occurred.Try again.", 1500, Notification.Position.MIDDLE);
-
-                }
-
-            }
-            );
-            dialog.add(new Text("Add your new phone number"));
-            dialog.add(new Div(phone));
-            dialog.add(new Div(password));
-            dialog.add(new Div(close, save));
-            dialog.open();
-
-
-        });
-
-
-        name.addClickListener(e -> {
-
-            Dialog dialog = new Dialog();
-            TextField newNameSub = new TextField("Name");
-            Button close = new Button("Cancel", event -> {
-
-                dialog.close();
-            });
-            Button save = new Button("Save", event -> {
-
-                String newName = newNameSub.getValue();
-                User response = userService.addUserName(new NameAddRequest(newName, user.getLogin()), token);
-                if (response != null) {
-                    user.setName(newName);
-                    name.setText("Your name: " + response.getName() + ". Click to change");
-                    dialog.close();
-                } else {
-                    Notification.show("An error occurred.Try again.", 4000, Notification.Position.MIDDLE);
-
-                }
-            }
-            );
-            dialog.add(new Text("Add your name"));
-            dialog.add(new Div(newNameSub));
-            dialog.add(new Div(close, save));
-            dialog.open();
-
-        });
-        address.addClickListener(e -> {
-            address.getUI().ifPresent(ui -> {
-                ui.navigate("address");
-            });
-        });
-        exit.addClickListener(e -> {
-
-            Dialog dialog = new Dialog();
-            Button close = new Button("Cancel", event -> {
-                dialog.close();
-            });
-            Button yes = new Button("Yes");
-            yes.addClickListener(event -> {
+                });
+                Button save = new Button("Save", event -> {
+                    String newPhone = phone.getValue();
+                    String pass = password.getValue();
+                    boolean response = userService.updateUserLogin(new UpdateLoginRequest(user.getLogin(), newPhone), token);
+                    if (response) {
+                        AuthResponse authResponse = authService.auth(new AuthRequest(newPhone, pass));
+                        VaadinSession.getCurrent().setAttribute("authResponse", authResponse);
+                        VaadinSession.getCurrent().setAttribute("token", authResponse.getToken());
+                        user = authResponse.getUser();
+                        token = authResponse.getToken();
+                        phones.setText("Your phone number: " + user.getLogin() + ". Click to change");
                         dialog.close();
-                        yes.getUI().ifPresent(ui -> {
-                            ui.navigate("login");
-                        });
+                    } else {
+                        notification( MESSAGE.get("Error"),4000);
+
                     }
-            );
-            dialog.add(new Text("Are you sure you want to get out?"));
-            dialog.add(new Div(close, yes));
-            dialog.open();
+
+                }
+                );
+                dialog.add(new Text("Add your new phone number"));
+                dialog.add(new Div(phone));
+                dialog.add(new Div(password));
+                dialog.add(new Div(close, save));
+                dialog.open();
 
 
-        });
+            });
+
+
+            name.addClickListener(e -> {
+
+                Dialog dialog = new Dialog();
+                TextField newNameSub = new TextField("Name");
+                Button close = new Button("Cancel", event -> {
+
+                    dialog.close();
+                });
+                Button save = new Button("Save", event -> {
+
+                    String newName = newNameSub.getValue();
+                    User response = userService.addUserName(new NameAddRequest(newName, user.getLogin()), token);
+                    if (response != null) {
+                        user.setName(newName);
+                        name.setText("Your name: " + response.getName() + ". Click to change");
+                        dialog.close();
+                    } else {
+                        notification( MESSAGE.get("Error"),4000);
+
+                    }
+                }
+                );
+                dialog.add(new Text("Add your name"));
+                dialog.add(new Div(newNameSub));
+                dialog.add(new Div(close, save));
+                dialog.open();
+
+            });
+            address.addClickListener(e -> {
+                address.getUI().ifPresent(ui -> {
+                    ui.navigate("address");
+                });
+            });
+            exit.addClickListener(e -> {
+
+                Dialog dialog = new Dialog();
+                Button close = new Button("Cancel", event -> {
+                    dialog.close();
+                });
+                Button yes = new Button("Yes");
+                yes.addClickListener(event -> {
+                            dialog.close();
+                            yes.getUI().ifPresent(ui -> {
+                                ui.navigate("");
+                            });
+                        }
+                );
+                dialog.add(new Text(MESSAGE.get("logout")));
+                dialog.add(new Div(close, yes));
+                dialog.open();
+
+
+            });
+        }
+
 
     }
-
+    private Notification notification(String message, int time) {
+        return Notification.show(message, time, Notification.Position.MIDDLE);
+    }
     private Component createTitle() {
         H3 h3 = new H3("User settings");
         h3.setSizeFull();

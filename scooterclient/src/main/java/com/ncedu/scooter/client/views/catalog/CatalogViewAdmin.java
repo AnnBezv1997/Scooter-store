@@ -2,16 +2,15 @@ package com.ncedu.scooter.client.views.catalog;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.ncedu.scooter.client.model.product.*;
-import com.ncedu.scooter.client.model.request.user.AuthResponse;
 import com.ncedu.scooter.client.model.request.product.ProductRequest;
 import com.ncedu.scooter.client.model.request.product.ProductResponse;
+import com.ncedu.scooter.client.model.request.user.AuthResponse;
 import com.ncedu.scooter.client.model.user.User;
+import com.ncedu.scooter.client.service.OrderService;
+import com.ncedu.scooter.client.service.ProductService;
 import com.ncedu.scooter.client.service.ProductServiceAdmin;
 import com.ncedu.scooter.client.views.main.ViewCatalog;
-import com.vaadin.flow.component.ClickEvent;
-import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.ComponentEventListener;
-import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -19,7 +18,6 @@ import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.HeaderRow;
-import com.vaadin.flow.component.gridpro.GridPro;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Image;
@@ -41,6 +39,9 @@ import com.vaadin.flow.server.VaadinSession;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Comparator;
+
+import static com.ncedu.scooter.client.views.catalog.Message.MESSAGE;
 
 @Route(value = "admin", layout = ViewCatalog.class)
 @PageTitle("Admin")
@@ -48,11 +49,17 @@ import java.util.ArrayList;
 public class CatalogViewAdmin extends Div {
     private AuthResponse authResponse = (AuthResponse) VaadinSession.getCurrent().getAttribute("authResponse");
     private String token = (String) VaadinSession.getCurrent().getAttribute("token");
-    private User user = authResponse.getUser();
+    private User user;
+
+
     private Grid<Product> productGrid = new Grid<>(Product.class);
     private Grid<Discount> discountGrid = new Grid<>();
     private Grid<Category> categoryGrid = new Grid<>();
+
     private ListDataProvider<Product> dataProvider;
+    private ListDataProvider<Category> dataProviderCategory;
+    private ListDataProvider<Discount> dataProviderDiscount;
+
     private Grid.Column<Product> product;
     private Grid.Column<Product> description;
     private Grid.Column<Product> category;
@@ -60,6 +67,7 @@ public class CatalogViewAdmin extends Div {
     private Grid.Column<Product> discount;
     private Grid.Column<Product> id;
     private Grid.Column<Product> stockStatus;
+
     private TextField searchBar = new TextField();
 
     private Integer currentPage = 0;
@@ -71,53 +79,74 @@ public class CatalogViewAdmin extends Div {
 
     private Integer sizeElement = 2;
 
-    public CatalogViewAdmin(ProductServiceAdmin productService) throws JsonProcessingException {
+    public CatalogViewAdmin(ProductServiceAdmin productService, ProductService service, OrderService orderService) throws JsonProcessingException {
+        CatalogView catalogView = new CatalogView(service, orderService);
+        if (authResponse == null) {
+            catalogView.errorPage();
 
-        addClassName("catalog-view-admin");
-        add(createSearchBar(productService));
-        createDataProvider(productService);
-        add(createGrid());
-        createIdColumn();
-        createProductColum();
-        createDescriptionColum();
-        createCategoryColum();
-        createPriceColum();
-        createDisconutColum();
-        createStockStatusColum();
-        addFiltersToGrid(productService);
-        Button next = new Button("Next", buttonClickEvent -> {
-            if (currentPage < totalPages - 1) {
-                currentPage++;
-                createDataProvider(productService);
-                productGrid.setDataProvider(dataProvider);
-            } else {
-                Notification.show("The end!", 1000, Notification.Position.MIDDLE);
-            }
-        });
-        Button back = new Button("Back", buttonClickEvent -> {
-            if (currentPage > 0 && currentPage < totalPages) {
-                currentPage--;
-                createDataProvider(productService);
-                productGrid.setDataProvider(dataProvider);
-            } else {
-                Notification.show("Beginning!", 1000, Notification.Position.MIDDLE);
-            }
-        });
-        add(back);
-        add(next);
-        productGrid.addItemClickListener(event -> {
-            Product showProduct = event.getItem();
-            try {
-                pageProduct(showProduct, productService);
-            } catch (JsonProcessingException e) {
-                e.getMessage();
-            }
+        } else if (!authResponse.getUser().getRole().getName().equals("ROLE_ADMIN")) {
+           catalogView.errorPage();
+        } else if (authResponse.getUser().getRole().getName().equals("ROLE_ADMIN")){
+            user = authResponse.getUser();
+            addClassName("catalog-view-admin");
+            add(createSearchBar(productService));
+            createDataProvider(productService);
+            add(createGrid());
+            createIdColumn();
+            createProductColum();
+            createDescriptionColum();
+            createCategoryColum();
+            createPriceColum();
+            createDisconutColum();
+            createStockStatusColum();
+            addFiltersToGrid(productService);
+
+            createDataProviderCategory(productService);
+            createGridCategory();
+            createColumnCategoryGrid();
+
+            createDataProviderDiscount(productService);
+            createGridDiscountt();
+            createColumnDiscountGrid();
+
+            Button next = new Button(MESSAGE.get("Next"), buttonClickEvent -> {
+                if (currentPage < totalPages - 1) {
+                    currentPage++;
+                    createDataProvider(productService);
+                    productGrid.setDataProvider(dataProvider);
+                } else {
+                    notification(MESSAGE.get("The end"), 1200);
+
+                }
+            });
+            Button back = new Button(MESSAGE.get("Back"), buttonClickEvent -> {
+                if (currentPage > 0 && currentPage < totalPages) {
+                    currentPage--;
+                    createDataProvider(productService);
+                    productGrid.setDataProvider(dataProvider);
+                } else {
+                    notification(MESSAGE.get("Go"), 1000);
+                }
+            });
+            add(back);
+            add(next);
+            productGrid.addItemClickListener(event -> {
+                Product showProduct = event.getItem();
+                try {
+                    pageProduct(showProduct, productService);
+                } catch (JsonProcessingException e) {
+                    e.getMessage();
+                }
 
 
-        });
+            });
+        }
+
 
     }
-
+    private Notification notification(String message, int time) {
+        return Notification.show(message, time, Notification.Position.MIDDLE);
+    }
     private void createDataProvider(ProductServiceAdmin productService) {
         ProductRequest productRequest = new ProductRequest(currentPage, sizeElement, sortBy, sortDirection, categorySort, search);
         ProductResponse productResponse = productService.getPageProduct(token, productRequest);
@@ -144,7 +173,9 @@ public class CatalogViewAdmin extends Div {
         product = productGrid.addColumn(new ComponentRenderer<>(product -> {
             VerticalLayout hl = new VerticalLayout();
             hl.setAlignItems(FlexComponent.Alignment.AUTO);
-            Image logo = new Image("images/logo.png", "ScooterClient logo");
+            Image logo = new Image("images/" + product.getImage(), "ScooterClient logo");
+            logo.setHeight("150px");
+            logo.setHeight("150px");
             Span span = new Span();
             span.setClassName("name");
             span.setText(product.getName());
@@ -179,7 +210,21 @@ public class CatalogViewAdmin extends Div {
     }
 
     private void createCategoryColum() {
-        category = productGrid.addColumn(product -> product.getCategory().getName()).setHeader("Category");
+        category = productGrid.addColumn(new ComponentRenderer<>(product1 -> {
+            VerticalLayout hl = new VerticalLayout();
+            hl.setAlignItems(FlexComponent.Alignment.START);
+            Span span1 = new Span();
+            // Product product1 = product;
+            if (product1.getCategory() == null) {
+                span1.setText("");
+                hl.add(span1);
+                return hl;
+            } else {
+                span1.setText(product1.getCategory().getName());
+                hl.add(span1);
+                return hl;
+            }
+        })).setHeader("Category");
 
     }
 
@@ -189,27 +234,29 @@ public class CatalogViewAdmin extends Div {
             hl.setAlignItems(FlexComponent.Alignment.START);
             Span span1 = new Span();
             Span span2 = new Span();
-            Product product1 = product;
-            if (product1.getDiscount() != null) {
-                if (product1.getDiscount().getDiscountType().toString().equals("ABSOLUTE")) {
-                    BigDecimal p = product1.getPrice().subtract(product1.getDiscount().getValue());
-                    span1.setText("New price:" + p.doubleValue() + "P.");
-                    span2.setText("Old price:" + product1.getPrice() + "P.");
+            Product p = product;
+            if (p.getDiscount() != null) {
+                if (p.getDiscount().getDiscountType().toString().equals("ABSOLUTE")) {
+                    double totalDiscount = p.getDiscount().getValue().doubleValue();
+                    BigDecimal price = p.getPrice().subtract(new BigDecimal(totalDiscount));
+                    span1.setText(MESSAGE.get("New price") + price + " $.");
+                    span2.setText(MESSAGE.get("Old price") + p.getPrice() + " $.");
                 } else {
-                    BigDecimal p = product1.getPrice().subtract(product1.getPrice().multiply(new BigDecimal(product1.getDiscount().getValue().doubleValue() / 100)));
-                    span1.setText("New price:" + p.doubleValue() + "P.");
-                    span2.setText("Old price:" + product1.getPrice() + "P.");
+                    double totalDiscount = p.getPrice().multiply(new BigDecimal(p.getDiscount().getValue().doubleValue() / 100)).doubleValue();
+                    BigDecimal price = p.getPrice().subtract(new BigDecimal(totalDiscount));
+                    span1.setText(MESSAGE.get("New price") + price + " $.");
+                    span2.setText(MESSAGE.get("Old price") + p.getPrice() + " $.");
                 }
 
                 hl.add(span1, span2);
                 return hl;
             } else {
-                span1.setText(product1.getPrice() + "P.");
+                span1.setText(p.getPrice() + " $.");
                 hl.add(span1);
                 return hl;
             }
-
         })).setHeader("Price");
+
     }
 
     private Component createSearchBar(ProductServiceAdmin productService) {
@@ -247,359 +294,86 @@ public class CatalogViewAdmin extends Div {
                 e.getMessage();
             }
         });
+
+        Dialog dialogDiscount = new Dialog();
+        try {
+            discountGrid(productService, dialogDiscount, new Dialog());
+        } catch (JsonProcessingException e) {
+            e.getMessage();
+        }
         Button discount = new Button("Discount");
         discount.addClickListener(event -> {
-            try {
-                discountGrid(productService);
-            } catch (JsonProcessingException e) {
-                e.getMessage();
-            }
+            dialogDiscount.open();
         });
-        Button category = new Button("Category");
-        category.addClickListener(event -> {
-            try {
-                categoryGrid(productService);
-            } catch (JsonProcessingException e) {
-                e.getMessage();
-            }
+
+
+        Dialog dialogCategory = new Dialog();
+        try {
+            categoryGrid(productService, dialogCategory, new Dialog());
+        } catch (JsonProcessingException e) {
+            e.getMessage();
+        }
+        Button category = new Button("Category", event -> {
+            dialogCategory.open();
         });
+
         newProduct.setWidth("150px");
         newProduct.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        discount.setWidth("100");
+        discount.setWidth("150px");
         discount.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        category.setWidth("100px");
+        category.setWidth("150px");
         category.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         horizontalLayout.add(searchBar, newProduct, discount, category);
         return horizontalLayout;
     }
 
+
     private void pageProduct(Product showProduct, ProductServiceAdmin productService) throws JsonProcessingException {
-        H3 h3 = new H3("Update product:");
-        h3.setSizeFull();
-        Dialog dialog = new Dialog();
-        dialog.setWidth("600px");
+       PageProductAdmin pageProductAdmin = new PageProductAdmin(productService,showProduct,token);
+       pageProductAdmin.pageProduct(productGrid, dataProvider);
 
-        VerticalLayout verticalLayout1 = new VerticalLayout();
-        verticalLayout1.setAlignItems(FlexComponent.Alignment.CENTER);
-        HorizontalLayout horizontalLayout = new HorizontalLayout();
-        horizontalLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-        HorizontalLayout horizontalLayout1 = new HorizontalLayout();
-        horizontalLayout1.setAlignItems(FlexComponent.Alignment.CENTER);
-
-
-        TextField name = new TextField("Product name");
-        name.setValue(showProduct.getName());
-        name.setWidth("550px");
-        TextField description = new TextField("Description");
-        description.setValue(showProduct.getDescription());
-        description.setWidth("550px");
-        IntegerField price = new IntegerField("Price");
-        price.setValue(showProduct.getPrice().intValue());
-
-
-        TextField image = new TextField("Image");
-        image.setValue(showProduct.getImage());
-
-
-        IntegerField stockStatus = new IntegerField("Stock Status");
-        stockStatus.setValue(showProduct.getStockStatus().getCount());
-
-
-        ArrayList<Category> categoryArrayList = productService.getCategories(token);
-        ComboBox<Category> category = new ComboBox<>("Category");
-        category.setItemLabelGenerator(Category::getName);
-        category.setItems(categoryArrayList);
-        category.setValue(showProduct.getCategory());
-        category.addValueChangeListener(categoryClick -> {
-            showProduct.setCategory(categoryClick.getValue());
-        });
-
-        ArrayList<Discount> discountArrayList = productService.getDiscountList(token);
-        ComboBox<Discount> discount = new ComboBox<>("Discount");
-        discount.setItemLabelGenerator(Discount::getName);
-        discount.setItems(discountArrayList);
-        discount.setValue(showProduct.getDiscount());
-        discount.addValueChangeListener(discountClick -> {
-            showProduct.setDiscount(discountClick.getValue());
-        });
-
-        verticalLayout1.add(h3, name, description);
-        horizontalLayout.add(price, image, stockStatus);
-        horizontalLayout1.add(category, discount);
-
-        Button close = new Button("Cancel", e -> {
-            dialog.close();
-        });
-        Button save = new Button("Save", e -> {
-            showProduct.setName(name.getValue());
-            showProduct.setDescription(description.getValue());
-            BigDecimal newPrice = new BigDecimal(price.getValue());
-            showProduct.setPrice(newPrice);
-            showProduct.setImage(image.getValue());
-            showProduct.setCategory(category.getValue());
-            showProduct.setDiscount(discount.getValue());
-            StockStatus newStockStatus = new StockStatus(showProduct.getStockStatus().getId(), stockStatus.getValue());
-
-            boolean st = productService.updateStockStatus(newStockStatus, token);
-            if (st) {
-                showProduct.setStockStatus(newStockStatus);
-            }
-
-            boolean b = productService.updateProduct(showProduct, token);
-            if (b) {
-                createDataProvider(productService);
-                productGrid.setDataProvider(dataProvider);
-            } else {
-                Notification.show("Try again!", 1500, Notification.Position.MIDDLE);
-            }
-            dialog.close();
-        });
-        Button detele = new Button("Delete", e -> {
-            boolean b = productService.deleteProduct(showProduct, token);
-            if (b) {
-                createDataProvider(productService);
-                productGrid.setDataProvider(dataProvider);
-            } else {
-                Notification.show("Try again!", 1500, Notification.Position.MIDDLE);
-            }
-            dialog.close();
-        });
-        save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        HorizontalLayout buttonLayout = new HorizontalLayout();
-        buttonLayout.add(close, save, detele);
-        dialog.add(verticalLayout1, horizontalLayout, horizontalLayout1, buttonLayout);
-
-        dialog.open();
     }
 
     private void pageNewProduct(ProductServiceAdmin productService) throws JsonProcessingException {
-        H3 h3 = new H3("New product:");
-        h3.setSizeFull();
-
-        Dialog dialog = new Dialog();
-        dialog.setWidth("600px");
-        Product newProduct = new Product();
-        VerticalLayout verticalLayout1 = new VerticalLayout();
-        verticalLayout1.setAlignItems(FlexComponent.Alignment.CENTER);
-        HorizontalLayout horizontalLayout = new HorizontalLayout();
-        horizontalLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-        HorizontalLayout horizontalLayout1 = new HorizontalLayout();
-        horizontalLayout1.setAlignItems(FlexComponent.Alignment.CENTER);
-
-
-        TextField name = new TextField("Product name");
-        name.setWidth("550px");
-        TextField description = new TextField("Description");
-
-        description.setWidth("550px");
-        IntegerField price = new IntegerField("Price");
-
-        TextField image = new TextField("Image");
-        IntegerField stockStatus = new IntegerField("Stock Status");
-
-
-        ArrayList<Category> categoryArrayList = productService.getCategories(token);
-        ComboBox<Category> category = new ComboBox<>("Category");
-        category.setItemLabelGenerator(Category::getName);
-        category.setItems(categoryArrayList);
-
-        ArrayList<Discount> discountArrayList = productService.getDiscountList(token);
-        ComboBox<Discount> discount = new ComboBox<>("Discount");
-        discount.setItemLabelGenerator(Discount::getName);
-        discount.setItems(discountArrayList);
-
-        verticalLayout1.add(h3, name, description);
-        horizontalLayout.add(price, image, stockStatus);
-        horizontalLayout1.add(category, discount);
-
-        Button close = new Button("Cancel", e -> {
-            dialog.close();
-        });
-        Button save = new Button("Save", e -> {
-            newProduct.setName(name.getValue());
-            newProduct.setDescription(description.getValue());
-            BigDecimal newPrice = new BigDecimal(price.getValue());
-            newProduct.setPrice(newPrice);
-            newProduct.setImage(image.getValue());
-            newProduct.setCategory(category.getValue());
-            newProduct.setDiscount(discount.getValue());
-            StockStatus newStockStatus = new StockStatus();
-            newStockStatus.setCount(stockStatus.getValue());
-            newProduct.setStockStatus(newStockStatus);
-
-            boolean b = productService.saveProduct(newProduct, token);
-            if (b) {
-                createDataProvider(productService);
-                productGrid.setDataProvider(dataProvider);
-            } else {
-                Notification.show("Try again!", 1500, Notification.Position.MIDDLE);
-            }
-            dialog.close();
-        });
-
-        save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        HorizontalLayout buttonLayout = new HorizontalLayout();
-        buttonLayout.add(close, save);
-        dialog.add(verticalLayout1, horizontalLayout, horizontalLayout1, buttonLayout);
-
-        dialog.open();
+        PageProductAdmin pageProductAdmin = new PageProductAdmin(productService,token);
+        pageProductAdmin.pageNewProduct(productGrid, dataProvider);
     }
 
-    private void createDiscount(ProductServiceAdmin productService) {
-        H3 h3 = new H3("New discount:");
-        h3.setSizeFull();
-        Dialog dialog = new Dialog();
-        dialog.setWidth("600px");
-        Discount discount = new Discount();
 
-        VerticalLayout verticalLayout1 = new VerticalLayout();
-        verticalLayout1.setAlignItems(FlexComponent.Alignment.CENTER);
-        HorizontalLayout horizontalLayout = new HorizontalLayout();
-        horizontalLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-        HorizontalLayout horizontalLayout1 = new HorizontalLayout();
-        horizontalLayout1.setAlignItems(FlexComponent.Alignment.CENTER);
-
-        TextField name = new TextField("Discount name");
-        name.setWidth("550px");
-        TextField description = new TextField("Description");
-        description.setWidth("550px");
-        IntegerField value = new IntegerField("Value");
-
-        DiscountType[] discountTypes = DiscountType.values();
-        ComboBox<DiscountType> discountType = new ComboBox<>("Discount type");
-        discountType.setItems(discountTypes);
-        discountType.addValueChangeListener(discountTypeClick -> {
-            discount.setDiscountType(discountTypeClick.getValue());
-        });
-
-        verticalLayout1.add(h3, name, description);
-        horizontalLayout.add(value, discountType);
-
-        Button close = new Button("Cancel", e -> {
-            dialog.close();
-        });
-        Button save = new Button("Save", e -> {
-            discount.setName(name.getValue());
-            discount.setDescription(description.getValue());
-            BigDecimal newValue = new BigDecimal(value.getValue());
-            discount.setValue(newValue);
-            discount.setDiscountType(discountType.getValue());
-            try {
-                boolean b = productService.saveDisconut(discount, token);
-                if (b) {
-                    ArrayList<Discount> discountNewList = productService.getDiscountList(token);
-                    discountGrid.setItems(discountNewList);
-                    createDataProvider(productService);
-                    productGrid.setDataProvider(dataProvider);
-                    dialog.close();
-                } else {
-                    Notification.show("Try again!", 1500, Notification.Position.MIDDLE);
-                }
-            } catch (JsonProcessingException ex) {
-                ex.getMessage();
-            }
-
-        });
-
-        save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        HorizontalLayout buttonLayout = new HorizontalLayout();
-        buttonLayout.add(close, save);
-        dialog.add(verticalLayout1, horizontalLayout, buttonLayout);
-
-        dialog.open();
-    }
-
-    private void discountGrid(ProductServiceAdmin productService) throws JsonProcessingException {
+    private void createDataProviderDiscount(ProductServiceAdmin productService) throws JsonProcessingException {
 
         ArrayList<Discount> discountArrayList = productService.getDiscountList(token);
-        discountGrid.setItems(discountArrayList);
+        discountArrayList.sort(new Comparator<Discount>() {
+            public int compare(Discount d1, Discount d2) {
+                return d1.getId().compareTo(d2.getId());
+            }
+        });
+        dataProviderDiscount = new ListDataProvider<>(discountArrayList);
+    }
+
+    private Component createGridDiscountt() {
+        discountGrid.getDataProvider().refreshAll();
+        discountGrid.setDataProvider(dataProviderDiscount);
+        discountGrid.removeAllColumns();
+        return discountGrid;
+    }
+
+    private void createColumnDiscountGrid() {
         discountGrid.addColumn(d -> d.getId()).setHeader("Id");
         discountGrid.addColumn(d -> d.getName()).setHeader("Name");
         discountGrid.addColumn(d -> d.getDescription()).setHeader("Description");
         discountGrid.addColumn(d -> d.getValue()).setHeader("Value");
         discountGrid.addColumn(d -> d.getDiscountType()).setHeader("Type");
+    }
+
+    private void discountGrid(ProductServiceAdmin productService, Dialog dialog, Dialog updateDiscount) throws JsonProcessingException {
+        dialog.add(discountGrid);
         discountGrid.addItemClickListener(discountItem -> {
-            H3 h3 = new H3("Update discount:");
-            h3.setSizeFull();
-            Dialog dialog = new Dialog();
-            dialog.setWidth("600px");
-
-            VerticalLayout verticalLayout1 = new VerticalLayout();
-            verticalLayout1.setAlignItems(FlexComponent.Alignment.CENTER);
-            HorizontalLayout horizontalLayout = new HorizontalLayout();
-            horizontalLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-
-            TextField name = new TextField("Discount name");
-            name.setWidth("550px");
-            name.setValue(discountItem.getItem().getName());
-            TextField description = new TextField("Description");
-            description.setWidth("550px");
-            description.setValue(discountItem.getItem().getDescription());
-            IntegerField value = new IntegerField("Value");
-            value.setValue(discountItem.getItem().getValue().intValue());
-
-            DiscountType[] discountTypes = DiscountType.values();
-            ComboBox<DiscountType> discountType = new ComboBox<>("Discount type");
-            discountType.setItems(discountTypes);
-            discountType.setValue(discountItem.getItem().getDiscountType());
-            discountType.addValueChangeListener(discountTypeClick -> {
-                discountItem.getItem().setDiscountType(discountTypeClick.getValue());
-            });
-
-            verticalLayout1.add(h3, name, description);
-            horizontalLayout.add(value, discountType);
-
-            Button close = new Button("Cancel", e -> {
-                dialog.close();
-            });
-            Button save = new Button("Save", e -> {
-                discountItem.getItem().setName(name.getValue());
-                discountItem.getItem().setDescription(description.getValue());
-                BigDecimal newValue = new BigDecimal(value.getValue());
-                discountItem.getItem().setValue(newValue);
-                discountItem.getItem().setDiscountType(discountType.getValue());
-                try {
-                    boolean b = productService.updateDiscount(discountItem.getItem(), token);
-                    if (b) {
-                        ArrayList<Discount> discountNewList = productService.getDiscountList(token);
-                        discountGrid.setItems(discountNewList);
-                        createDataProvider(productService);
-                        productGrid.setDataProvider(dataProvider);
-                        dialog.close();
-                    } else {
-                        Notification.show("Try again!", 1500, Notification.Position.MIDDLE);
-                    }
-                } catch (JsonProcessingException ex) {
-                    ex.getMessage();
-                }
-            });
-            Button delete = new Button("Delete", e -> {
-                try {
-                    boolean b = productService.deleteDiscount(discountItem.getItem(), token);
-                    if (b) {
-                        ArrayList<Discount> discountNewList = productService.getDiscountList(token);
-                        discountGrid.setItems(discountNewList);
-                        createDataProvider(productService);
-                        productGrid.setDataProvider(dataProvider);
-                        dialog.close();
-                    } else {
-                        Notification.show("Try again!", 1500, Notification.Position.MIDDLE);
-                    }
-                } catch (JsonProcessingException ex) {
-                    ex.getMessage();
-                }
-
-
-            });
-
-            save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-            HorizontalLayout buttonLayout = new HorizontalLayout();
-            buttonLayout.add(close, save, delete);
-            dialog.add(verticalLayout1, horizontalLayout, buttonLayout);
-
-            dialog.open();
+            updateDiscount.removeAll();
+            updateDiscount(discountItem.getItem(), productService, updateDiscount);
+            updateDiscount.open();
         });
-        Dialog dialog = new Dialog();
+
         dialog.add(discountGrid);
         Button close = new Button("Close");
         close.addClickListener(buttonClickEvent -> {
@@ -613,78 +387,71 @@ public class CatalogViewAdmin extends Div {
         newDiscount.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         dialog.setWidth("800px");
         dialog.add(close, newDiscount);
-        dialog.open();
+    }
+    private void createDiscount(ProductServiceAdmin productService) {
+      CreateDiscount createDicount = new CreateDiscount(productService, token);
+      createDicount.createDiscount(productGrid,discountGrid,dataProvider);
     }
 
-    private void createCategory(ProductServiceAdmin productService) throws JsonProcessingException {
-        H3 h3 = new H3("New category:");
-        h3.setSizeFull();
-        Dialog dialog = new Dialog();
-        dialog.setWidth("600px");
-        Category category = new Category();
+    private void updateDiscount(Discount discountItem, ProductServiceAdmin productService, Dialog dialog) {
+        UpdateDiscount updateDiscount = new UpdateDiscount(discountItem, productService, dialog, token);
+        updateDiscount.updateDiscount(productGrid,discountGrid,dataProvider);
+    }
 
-        VerticalLayout verticalLayout1 = new VerticalLayout();
-        verticalLayout1.setAlignItems(FlexComponent.Alignment.CENTER);
-        HorizontalLayout horizontalLayout = new HorizontalLayout();
-        horizontalLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-        HorizontalLayout horizontalLayout1 = new HorizontalLayout();
-        horizontalLayout1.setAlignItems(FlexComponent.Alignment.CENTER);
+    private void createCategory(ProductServiceAdmin productService) throws JsonProcessingException{
+       CreateCategory createCategory = new CreateCategory(productService, token);
+       createCategory.createCategory(productGrid,categoryGrid,dataProvider);
+    }
 
-        TextField name = new TextField("Category name");
-        name.setWidth("550px");
-        TextField description = new TextField("Description");
-        description.setWidth("550px");
+    private void createDataProviderCategory(ProductServiceAdmin productService) throws JsonProcessingException {
 
         ArrayList<Category> categoryArrayList = productService.getCategories(token);
-        ComboBox<Category> categoryComboBox = new ComboBox<>("Category parent");
-        categoryComboBox.setItemLabelGenerator(Category::getName);
-        categoryComboBox.setItems(categoryArrayList);
-        categoryComboBox.addValueChangeListener(discountTypeClick -> {
-            category.setCategoryParent(discountTypeClick.getValue());
+        categoryArrayList.sort(new Comparator<Category>() {
+            public int compare(Category c1, Category c2) {
+                return c1.getId().compareTo(c2.getId());
+            }
+        });
+        dataProviderCategory = new ListDataProvider<>(categoryArrayList);
+    }
+
+    private Component createGridCategory() {
+        categoryGrid.getDataProvider().refreshAll();
+        categoryGrid.setDataProvider(dataProviderCategory);
+        categoryGrid.removeAllColumns();
+        return categoryGrid;
+    }
+
+    private void categoryGrid(ProductServiceAdmin productService, Dialog dialog, Dialog dialogCategory) throws JsonProcessingException {
+        dialog.add(categoryGrid);
+        dialog.setWidth("800px");
+        categoryGrid.addItemClickListener(categoryItem -> {
+            dialogCategory.removeAll();
+            updateCategory(categoryItem.getItem(), productService, dialogCategory);
+            dialogCategory.open();
         });
 
-        verticalLayout1.add(h3, name, description, categoryComboBox);
-
-
-        Button close = new Button("Cancel", e -> {
+        Button close = new Button("Close");
+        close.addClickListener(buttonClickEvent -> {
             dialog.close();
         });
-        Button save = new Button("Save", e -> {
-            category.setName(name.getValue());
-            category.setDescription(description.getValue());
-            category.setCategoryParent(categoryComboBox.getValue());
+        Button newCategory = new Button("New Category");
+        newCategory.addClickListener(buttonClickEvent -> {
             try {
-                boolean b = productService.saveCategory(category, token);
-                if (b) {
-                    ArrayList<Category> categoryNewList = productService.getCategories(token);
-                    categoryGrid.setItems(categoryNewList);
-                    createDataProvider(productService);
-                    productGrid.setDataProvider(dataProvider);
-                    dialog.close();
-                } else {
-                    Notification.show("Try again!", 1500, Notification.Position.MIDDLE);
-                }
-            } catch (JsonProcessingException ex) {
-                ex.getMessage();
+                createCategory(productService);
+            } catch (JsonProcessingException e) {
+                e.getMessage();
             }
-
         });
+        newCategory.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        HorizontalLayout buttonLayout = new HorizontalLayout();
-        buttonLayout.add(close, save);
-        dialog.add(verticalLayout1, horizontalLayout, buttonLayout);
+        dialog.add(close, newCategory);
 
-        dialog.open();
     }
 
-    private void categoryGrid(ProductServiceAdmin productService) throws JsonProcessingException {
-        ArrayList<Category> categoryArrayList = productService.getCategories(token);
-        categoryGrid.setItems(categoryArrayList);
+    private void createColumnCategoryGrid() {
         categoryGrid.addColumn(c -> c.getId()).setHeader("Id");
         categoryGrid.addColumn(c -> c.getName()).setHeader("Name");
         categoryGrid.addColumn(c -> c.getDescription()).setHeader("Description");
-
         categoryGrid.addColumn(new ComponentRenderer<>(c -> {
             VerticalLayout hl = new VerticalLayout();
             hl.setAlignItems(FlexComponent.Alignment.START);
@@ -701,105 +468,128 @@ public class CatalogViewAdmin extends Div {
                 return hl;
             }
         })).setHeader("Category parent");
+    }
 
-        categoryGrid.addItemClickListener(categoryItem -> {
-            H3 h3 = new H3("Update category:");
-            h3.setSizeFull();
-            Dialog dialog = new Dialog();
-            dialog.setWidth("600px");
-            Discount discount = new Discount();
+    private boolean parent(Category category1, Category category2) {
+        ArrayList<Category> childCategory = new ArrayList<>();
+        if (category1.equals(category2.getCategoryParent())) {
+            return true;
+        } else {
+            if (category2.getCategoryParent() != null) {
+                childCategory.add(category2.getCategoryParent());
+                child(childCategory, category2.getCategoryParent());
+            }
+            if (category1.getCategoryParent() != null) {
+                childCategory.add(category1.getCategoryParent());
+                child(childCategory, category1.getCategoryParent());
+            }
+            for (Category c : childCategory) {
+                if (c.equals(category1) || c.equals(category2)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
 
-            VerticalLayout verticalLayout1 = new VerticalLayout();
-            verticalLayout1.setAlignItems(FlexComponent.Alignment.CENTER);
-            HorizontalLayout horizontalLayout = new HorizontalLayout();
-            horizontalLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-            HorizontalLayout horizontalLayout1 = new HorizontalLayout();
-            horizontalLayout1.setAlignItems(FlexComponent.Alignment.CENTER);
+    private void child(ArrayList<Category> childCategory, Category category1) {
+        if (category1.getCategoryParent() != null) {
+            childCategory.add(category1.getCategoryParent());
+            child(childCategory, category1.getCategoryParent());
+        }
+    }
 
-            TextField name = new TextField("Category name");
-            name.setWidth("550px");
-            name.setValue(categoryItem.getItem().getName());
-            TextField description = new TextField("Description");
-            description.setWidth("550px");
-            description.setValue(categoryItem.getItem().getDescription());
+    private void updateCategory(Category categoryItem, ProductServiceAdmin productService, Dialog dialog1) {
 
+        H3 h3 = new H3("Update category:");
+        h3.setSizeFull();
 
-            ComboBox<Category> categoryComboBox = new ComboBox<>("Category parent");
-            categoryComboBox.setItems(categoryArrayList);
+        dialog1.setWidth("600px");
+
+        VerticalLayout verticalLayout1 = new VerticalLayout();
+        verticalLayout1.setAlignItems(FlexComponent.Alignment.CENTER);
+
+        TextField name = new TextField("Category name");
+        name.setWidth("550px");
+        name.setValue(categoryItem.getName());
+        TextField description = new TextField("Description");
+        description.setWidth("550px");
+        description.setValue(categoryItem.getDescription());
+
+        ComboBox<Category> categoryComboBox = new ComboBox<>("Category parent");
+        try {
+            ArrayList<Category> categories = productService.getCategories(token);
+            Category categoryNoParent = new Category();
+            categoryNoParent.setName("No parent");
+            categories.add(categoryNoParent);
+            categories.remove(categoryItem);
+            categoryComboBox.setItems(categories);
             categoryComboBox.setItemLabelGenerator(Category::getName);
-            categoryComboBox.setValue(categoryItem.getItem().getCategoryParent());
+            categoryComboBox.setValue(categoryItem.getCategoryParent());
             categoryComboBox.addValueChangeListener(changeEvent -> {
-                categoryItem.getItem().setCategoryParent(changeEvent.getValue());
             });
-
             verticalLayout1.add(h3, name, description, categoryComboBox);
+        } catch (JsonProcessingException e) {
+            e.getMessage();
+        }
 
-            Button close = new Button("Cancel", e -> {
-                dialog.close();
-            });
-            Button save = new Button("Save", e -> {
-                categoryItem.getItem().setName(name.getValue());
-                categoryItem.getItem().setDescription(description.getValue());
-                categoryItem.getItem().setCategoryParent(categoryComboBox.getValue());
-                try {
-                    boolean b = productService.updateCategory(categoryItem.getItem(), token);
-                    if (b) {
-                        ArrayList<Category> categories = productService.getCategories(token);
-                        categoryGrid.setItems(categories);
-                        createDataProvider(productService);
-                        productGrid.setDataProvider(dataProvider);
-                        dialog.close();
-                    } else {
-                        Notification.show("Try again!", 1500, Notification.Position.MIDDLE);
-                    }
-                } catch (JsonProcessingException ex) {
-                    ex.getMessage();
-                }
 
-            });
-            Button delete = new Button("Delete", e -> {
-                try {
-                    boolean b = productService.deleteCategory(categoryItem.getItem(), token);
-                    if (b) {
-                        ArrayList<Category> categoryNewList = productService.getCategories(token);
-                        categoryGrid.setItems(categoryNewList);
-                        createDataProvider(productService);
-                        productGrid.setDataProvider(dataProvider);
-                        dialog.close();
-                    } else {
-                        Notification.show("Try again!", 1500, Notification.Position.MIDDLE);
-                    }
-                } catch (JsonProcessingException ex) {
-                    ex.getMessage();
-                }
-
-            });
-
-            save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-            HorizontalLayout buttonLayout = new HorizontalLayout();
-            buttonLayout.add(close, save, delete);
-            dialog.add(verticalLayout1, horizontalLayout, buttonLayout);
-
-            dialog.open();
-        });
-        Dialog dialog = new Dialog();
-        dialog.add(categoryGrid);
-        Button close = new Button("Close");
-        close.addClickListener(buttonClickEvent -> {
-            dialog.close();
-        });
-        Button newDiscount = new Button("New Discount");
-        newDiscount.addClickListener(buttonClickEvent -> {
+        Button save = new Button("Save", e -> {
+            Category newParent = categoryComboBox.getValue();
+            categoryItem.setDescription(description.getValue());
+            categoryItem.setName(name.getValue());
             try {
-                createCategory(productService);
-            } catch (JsonProcessingException e) {
-                e.getMessage();
+                if (newParent != null) {
+                    if (newParent.getName().equals("No parent")) {
+                        categoryItem.setCategoryParent(null);
+                    } else {
+                        if (parent(categoryItem, newParent)) {
+                            notification(MESSAGE.get("ErrorParent"), 2500);
+
+                        } else {
+                            categoryItem.setCategoryParent(newParent);
+                        }
+                    }
+                }
+
+                boolean b = productService.updateCategory(categoryItem, token);
+                if (b) {
+                    createDataProviderCategory(productService);
+                    categoryGrid.setDataProvider(dataProviderCategory);
+
+                } else {
+                    notification(MESSAGE.get("Error"), 2500);
+                }
+            } catch (JsonProcessingException ex) {
+                ex.getMessage();
+            }
+
+        });
+        Button delete = new Button("Delete", e -> {
+            try {
+                boolean b = productService.deleteCategory(categoryItem, token);
+                if (b) {
+                    createDataProviderCategory(productService);
+                    categoryGrid.setDataProvider(dataProviderCategory);
+                    createDataProvider(productService);
+                    productGrid.setDataProvider(dataProvider);
+                    dialog1.close();
+                } else {
+                    notification(MESSAGE.get("Try"), 2500);
+                }
+            } catch (JsonProcessingException ex) {
+                ex.getMessage();
             }
         });
-        newDiscount.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        dialog.setWidth("800px");
-        dialog.add(close, newDiscount);
-        dialog.open();
+
+        save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        HorizontalLayout buttonLayout = new HorizontalLayout();
+        Button close = new Button("Cancel", e -> {
+            dialog1.close();
+        });
+        buttonLayout.add(close, save, delete);
+        dialog1.add(verticalLayout1, buttonLayout);
+
     }
 
 
@@ -831,8 +621,8 @@ public class CatalogViewAdmin extends Div {
 
         ComboBox<String> priceFilter = new ComboBox<>();
         ArrayList<String> sort = new ArrayList<>();
-        sort.add("ASC");
-        sort.add("DESC");
+        sort.add(MESSAGE.get("Asc"));
+        sort.add(MESSAGE.get("Desc"));
         priceFilter.setItems(sort);
         priceFilter.setPlaceholder("Sorting");
         priceFilter.setClearButtonVisible(true);
@@ -840,13 +630,13 @@ public class CatalogViewAdmin extends Div {
         priceFilter.addValueChangeListener(
                 event -> {
                     if (event.getValue() != null) {
-                        if (event.getValue().equals("ASC")) {
+                        if (event.getValue().equals(MESSAGE.get("Asc"))){
                             sortDirection = "ASC";
                             sortBy = "price";
                             currentPage = 0;
                             createDataProvider(productService);
                             productGrid.setDataProvider(dataProvider);
-                        } else if (event.getValue().equals("DESC")) {
+                        } else if (event.getValue().equals(MESSAGE.get("Desc"))) {
                             sortDirection = "DESC";
                             sortBy = "price";
                             currentPage = 0;
@@ -866,8 +656,8 @@ public class CatalogViewAdmin extends Div {
 
         ComboBox<String> idFilter = new ComboBox<>();
         ArrayList<String> sort1 = new ArrayList<>();
-        sort1.add("ASC");
-        sort1.add("DESC");
+        sort1.add(MESSAGE.get("Asc"));
+        sort1.add(MESSAGE.get("Desc"));
         idFilter.setItems(sort);
         idFilter.setPlaceholder("Sorting");
         idFilter.setClearButtonVisible(true);
@@ -875,13 +665,13 @@ public class CatalogViewAdmin extends Div {
         idFilter.addValueChangeListener(
                 event -> {
                     if (event.getValue() != null) {
-                        if (event.getValue().equals("ASC")) {
+                        if (event.getValue().equals("Ascending")) {
                             sortDirection = "ASC";
                             sortBy = "id";
                             currentPage = 0;
                             createDataProvider(productService);
                             productGrid.setDataProvider(dataProvider);
-                        } else if (event.getValue().equals("DESC")) {
+                        } else if (event.getValue().equals("Descending")) {
                             sortDirection = "DESC";
                             sortBy = "id";
                             currentPage = 0;
@@ -901,8 +691,8 @@ public class CatalogViewAdmin extends Div {
 
         ComboBox<String> discountFilter = new ComboBox<>();
         ArrayList<String> sort2 = new ArrayList<>();
-        sort2.add("ASC");
-        sort2.add("DESC");
+        sort2.add(MESSAGE.get("Asc"));
+        sort2.add(MESSAGE.get("Desc"));
         discountFilter.setItems(sort);
         discountFilter.setPlaceholder("Sorting");
         discountFilter.setClearButtonVisible(true);
@@ -910,13 +700,13 @@ public class CatalogViewAdmin extends Div {
         discountFilter.addValueChangeListener(
                 event -> {
                     if (event.getValue() != null) {
-                        if (event.getValue().equals("ASC")) {
+                        if (event.getValue().equals("Ascending")) {
                             sortDirection = "ASC";
                             sortBy = "discount";
                             currentPage = 0;
                             createDataProvider(productService);
                             productGrid.setDataProvider(dataProvider);
-                        } else if (event.getValue().equals("DESC")) {
+                        } else if (event.getValue().equals("Descending")) {
                             sortDirection = "DESC";
                             sortBy = "discount";
                             currentPage = 0;

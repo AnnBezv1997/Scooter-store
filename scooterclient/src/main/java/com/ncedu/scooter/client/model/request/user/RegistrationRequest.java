@@ -15,6 +15,5 @@ public class RegistrationRequest {
     @NotEmpty
     private String password;
 
-    @NotEmpty
     private String address;
 }

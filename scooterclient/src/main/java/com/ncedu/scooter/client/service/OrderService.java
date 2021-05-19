@@ -6,15 +6,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ncedu.scooter.client.model.order.Basket;
 import com.ncedu.scooter.client.model.order.UserOrder;
 import com.ncedu.scooter.client.model.product.Product;
+import com.ncedu.scooter.client.model.request.order.PriceResponse;
 import com.ncedu.scooter.client.model.request.order.ProductRequest;
 import com.ncedu.scooter.client.service.RestTemplate.ScooterRestTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 
 import static com.ncedu.scooter.client.service.Url.URL;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
 
 @Service
 public class OrderService {
@@ -48,8 +47,8 @@ public class OrderService {
     public boolean updateCountProductBasket(Basket basket, String token) {
         return scooterRestTemplate.post(URL.get("UPDATE_COUNT_PRODUCT"), boolean.class, basket, token).getBody();
     }
-    public BigDecimal totalPrice(Integer userId, String token) {
-        return scooterRestTemplate.get(URL.get("TOTAL_PRICE") + userId, BigDecimal.class, token).getBody();
+    public PriceResponse totalPrice(Integer userId, String token) {
+        return scooterRestTemplate.get(URL.get("TOTAL_PRICE") + userId, PriceResponse.class, token).getBody();
     }
     public boolean createOrder(UserOrder userOrder, String token) {
         return scooterRestTemplate.post(URL.get("ORDER_CREATE"), boolean.class, userOrder, token).getBody();

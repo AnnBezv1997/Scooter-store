@@ -21,7 +21,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-
+import static com.ncedu.scooter.client.views.register.Message.MESSAGE;
 
 @CssImport("./views/register/register-view.css")
 @Route(value = "register", layout = MainViewAuth.class)
@@ -31,7 +31,7 @@ public class RegisterView extends Div {
 
     private PhoneNumberField login = new PhoneNumberField("Phone number");
     private TextField address = new TextField("Address");
-    private PasswordField password = new PasswordField("Password");
+    private PasswordField password = new PasswordField("Password.At least 6 characters:");
 
     private Button cancel = new Button("Cancel");
     private Button save = new Button("Register");
@@ -49,30 +49,25 @@ public class RegisterView extends Div {
 
         cancel.addClickListener(e -> clearForm());
         save.addClickListener(e -> {
-
-/*
-            HttpHeaders headers = new HttpHeaders();
-            headers.add("Accept", MediaType.APPLICATION_JSON_VALUE);
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            RestTemplate restTemplate = new RestTemplate();
-            HttpEntity<RegistrationRequest> requestBody = new HttpEntity<>(binder.getBean(), headers);
-            String response = restTemplate.exchange(REGISTER_URL,
-                    HttpMethod.POST,
-                    requestBody, String.class).getBody();
-*/
-            String response = registrationService.registration(binder.getBean());
-            if (response.equals("OK")) {
-                Notification.show("Welcome to sign in!", 5000, Notification.Position.MIDDLE);
-                clearForm();
+            String number = binder.getBean().getLogin().replaceAll(" ", "");
+            String password = binder.getBean().getPassword();
+            if (number.length() == 12 && number.startsWith("+") && password.length() >= 6) {
+                String response = registrationService.registration(binder.getBean());
+                if (response.equals("OK")) {
+                    notification(MESSAGE.get("Welcome"), 5000);
+                    clearForm();
+                }
             } else {
-                Notification.show("An error occurred.Try again.", 5000, Notification.Position.MIDDLE);
-                clearForm();
+                notification(MESSAGE.get("ErrorRegist"), 5000);
             }
+
 
         });
     }
 
-
+    private Notification notification(String message, int time) {
+        return Notification.show(message, time, Notification.Position.MIDDLE);
+    }
     private void clearForm() {
         binder.setBean(new RegistrationRequest());
     }
@@ -113,6 +108,7 @@ public class RegisterView extends Div {
             countryCode.setPreventInvalidInput(true);
             countryCode.setItems("+7");
             countryCode.addCustomValueSetListener(e -> countryCode.setValue(e.getDetail()));
+
             number.setPattern("\\d*");
             number.setPreventInvalidInput(true);
             HorizontalLayout layout = new HorizontalLayout(countryCode, number);

@@ -1,14 +1,16 @@
 package com.ncedu.scooter.client.views.address;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.ncedu.scooter.client.model.user.Address;
 import com.ncedu.scooter.client.model.request.user.AddressRequest;
 import com.ncedu.scooter.client.model.request.user.AuthResponse;
+import com.ncedu.scooter.client.model.user.Address;
 import com.ncedu.scooter.client.model.user.User;
 import com.ncedu.scooter.client.service.UserService;
+import com.ncedu.scooter.client.views.catalog.ErrorView;
 import com.ncedu.scooter.client.views.main.ViewCatalog;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Text;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.CssImport;
@@ -16,7 +18,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -27,6 +29,8 @@ import com.vaadin.flow.server.VaadinSession;
 
 import java.util.ArrayList;
 
+import static com.ncedu.scooter.client.views.address.Message.MESSAGE;
+
 
 @Route(value = "address", layout = ViewCatalog.class)
 @PageTitle("Address")
@@ -34,91 +38,48 @@ import java.util.ArrayList;
 public class AddressView extends Div {
     private AuthResponse authResponse = (AuthResponse) VaadinSession.getCurrent().getAttribute("authResponse");
     private String token = (String) VaadinSession.getCurrent().getAttribute("token");
-    private User user = authResponse.getUser();
+    private User user;
     private Grid<Address> addressGrid = new Grid<>(Address.class);
     private Button newAddress = new Button("Add new Address");
 
     public AddressView(UserService userService) throws JsonProcessingException {
-        addClassName("address-view");
-        add(createFormLayout());
-        add(addressGrid);
-        add(createButtonLayout());
-        ArrayList<Address> addressResponse = userService.getAllAddress(user.getLogin(), token);
-        addressGrid.setItems(addressResponse);
-        addressGrid.removeAllColumns();
-        addressGrid.addColumn(address -> address.getAddress()).setHeader("Addresses");
+        if (authResponse == null) {
+            errorPage();
 
-        addressGrid.addItemClickListener(event -> {
+        } else if (authResponse.getUser().getRole().getName().equals("ROLE_ADMIN")) {
+            errorPage();
+        } else {
+            user = authResponse.getUser();
+            addClassName("address-view");
+            add(createFormLayout());
+            add(createGrid(userService));
+            add(createButtonLayout());
+            ArrayList<Address> addressResponse = userService.getAllAddress(user.getLogin(), token);
 
-                    Dialog dialog = new Dialog();
-                    Button close = new Button("Cancel", e -> {
-                        dialog.close();
-                    });
-                    Button delete = new Button("Delete", e -> {
-                        Dialog deleteDialog = new Dialog();
-                        deleteDialog.add(new Text("Are you sure?"));
-                        Button no = new Button("No", buttonClickEvent -> deleteDialog.close());
-                        Button yes = new Button("Yes, detele");
-                        yes.addClickListener(eventDelete -> {
-                            String response = userService.deleteAddress(event.getItem(), token);
-                            if (response.equals("OK")) {
-                                Notification.show("Done!", 1000, Notification.Position.MIDDLE);
-                                addressResponse.remove(event.getItem());
-                                addressGrid.setItems(addressResponse);
-                                deleteDialog.close();
-                                dialog.close();
-                            } else {
-                                Notification.show("An error occurred.Try again.", 1500, Notification.Position.MIDDLE);
+            newAddress.addClickListener(buttonClickEvent -> {
+                newAddress(userService, addressResponse);
 
-                            }
-                        });
-                        deleteDialog.add(new Div(no, yes));
-                        deleteDialog.open();
-
-                    });
-                    dialog.add(new Text(event.getItem().getAddress()));
-                    dialog.add(new Div(close, delete));
-                    dialog.open();
-                }
-        );
-        newAddress.addClickListener(buttonClickEvent -> {
-            Dialog dialog = new Dialog();
-            TextField newAddress = new TextField("New Address");
-            Button close = new Button("Cancel", event -> {
-
-                dialog.close();
             });
-            Button save = new Button("Save", event -> {
-
-                String newAddressValue = newAddress.getValue();
-                Address response = userService.addUserAddress(new AddressRequest(newAddressValue, user.getLogin()), token);
-                if (response != null) {
-                    Notification.show("Done!", 2500, Notification.Position.MIDDLE);
-                    addressResponse.add(response);
-                    addressGrid.setItems(addressResponse);
-                    dialog.close();
-                } else {
-                    Notification.show("An error occurred.Try again.", 4000, Notification.Position.MIDDLE);
-
-                }
-
-            }
-            );
-            dialog.add(new Text("Add your name"));
-            dialog.add(new Div(newAddress));
-            dialog.add(new Div(close, save));
-            dialog.open();
-
-        });
-    }
-
-    private Component createTitle() {
-        H3 h3 = new H3("Addresss");
-        h3.setSizeFull();
-        return h3;
+        }
 
     }
 
+    private Notification notification(String message, int time) {
+        return Notification.show(message, time, Notification.Position.MIDDLE);
+
+
+    }
+
+    private void errorPage() {
+        VerticalLayout verticalLayout = new VerticalLayout();
+        verticalLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        Image logo = new Image("images/error.png", "ScooterClient error");
+        logo.setHeight("410px");
+        logo.setWidth("800px");
+        verticalLayout.add(logo);
+        add(verticalLayout);
+        UI.getCurrent().navigate(ErrorView.class);
+    }
 
     private Component createFormLayout() {
         VerticalLayout wrapper = new VerticalLayout();
@@ -142,8 +103,72 @@ public class AddressView extends Div {
         ArrayList<Address> addressResponse = userService.getAllAddress(user.getLogin(), token);
         addressGrid.setItems(addressResponse);
         addressGrid.removeAllColumns();
-        addressGrid.addColumn(address -> address.getAddress()).setHeader("Addresses");
+
+        addressGrid.addColumn(address -> address.getAddress()).setHeader(MESSAGE.get("Addresses"));
+        addressGrid.setItems(addressResponse);
+        addressGrid.removeAllColumns();
+        addressGrid.addColumn(address -> address.getAddress()).setHeader(MESSAGE.get("Addresses"));
+        addressGrid.addItemClickListener(event -> {
+
+                    Dialog dialog = new Dialog();
+                    Button close = new Button(MESSAGE.get("Cancel"), e -> {
+                        dialog.close();
+                    });
+                    Button delete = new Button(MESSAGE.get("Delete"), e -> {
+                        Dialog deleteDialog = new Dialog();
+                        deleteDialog.add(new Text(MESSAGE.get("Сonfi")));
+                        Button no = new Button("No", buttonClickEvent -> deleteDialog.close());
+                        Button yes = new Button(MESSAGE.get("Yes"));
+                        yes.addClickListener(eventDelete -> {
+                            String response = userService.deleteAddress(event.getItem(), token);
+                            if (response.equals("OK")) {
+                                notification(MESSAGE.get("Done"), 2500);
+                                addressResponse.remove(event.getItem());
+                                addressGrid.setItems(addressResponse);
+                                deleteDialog.close();
+                                dialog.close();
+                            } else {
+                                notification(MESSAGE.get("Error"), 3000);
+                            }
+                        });
+                        deleteDialog.add(new Div(no, yes));
+                        deleteDialog.open();
+
+                    });
+                    dialog.add(new Text(event.getItem().getAddress()));
+                    dialog.add(new Div(close, delete));
+                    dialog.open();
+                }
+        );
         return addressGrid;
+    }
+
+    private void newAddress(UserService userService, ArrayList<Address> addressResponse) {
+        Dialog dialog = new Dialog();
+        TextField newAddress = new TextField(MESSAGE.get("New"));
+        Button close = new Button(MESSAGE.get("Cancel"), event -> {
+            dialog.close();
+        });
+        Button save = new Button(MESSAGE.get("Save"), event -> {
+
+            String newAddressValue = newAddress.getValue();
+            Address response = userService.addUserAddress(new AddressRequest(newAddressValue, user.getLogin()), token);
+            if (response != null) {
+                notification(MESSAGE.get("Done"), 2500);
+                addressResponse.add(response);
+                addressGrid.setItems(addressResponse);
+                dialog.close();
+            } else {
+                notification(MESSAGE.get("Error"), 4000);
+            }
+
+        }
+        );
+        dialog.add(new Text("Add your name"));
+        dialog.add(new Div(newAddress));
+        dialog.add(new Div(close, save));
+        dialog.open();
+
     }
 
 

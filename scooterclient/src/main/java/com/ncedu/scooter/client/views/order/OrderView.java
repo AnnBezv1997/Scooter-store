@@ -12,8 +12,11 @@ import com.ncedu.scooter.client.model.user.Address;
 import com.ncedu.scooter.client.model.user.User;
 import com.ncedu.scooter.client.service.OrderService;
 import com.ncedu.scooter.client.service.UserService;
+import com.ncedu.scooter.client.views.catalog.ErrorView;
+import com.ncedu.scooter.client.views.catalog.PageProduct;
 import com.ncedu.scooter.client.views.main.ViewCatalog;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -36,7 +39,6 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -47,7 +49,7 @@ import java.util.Date;
 public class OrderView extends Div {
     private AuthResponse authResponse = (AuthResponse) VaadinSession.getCurrent().getAttribute("authResponse");
     private String token = (String) VaadinSession.getCurrent().getAttribute("token");
-    private User user = authResponse.getUser();
+    private User user;
     private Grid<UserOrder> orderGrid = new Grid<>(UserOrder.class);
     private ListDataProvider<UserOrder> dataProvider;
 
@@ -58,25 +60,47 @@ public class OrderView extends Div {
     private Grid.Column<UserOrder> status;
 
     public OrderView(OrderService orderService, UserService userService) throws JsonProcessingException {
-        addClassName("order-view");
-        createTitle();
-        createDataProvider(orderService);
-        add(createGrid());
-        createAddressColum(orderService, userService);
-        createDateColum();
-        createPriceColum();
-        createStatusPayColum(orderService, userService);
-        createStatusColum(orderService);
-        orderGrid.addItemClickListener(event -> {
-            if (event.getItem().getOrderStatus() == null || event.getItem().getOrderStatus().equals(OrderStatus.DELIVERED)) {
-                try {
-                    basketOrder(orderService, event.getItem());
-                } catch (JsonProcessingException e) {
-                    e.getMessage();
-                }
-            }
+        if (authResponse == null) {
+            VerticalLayout verticalLayout = new VerticalLayout();
+            verticalLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+            Image logo = new Image("images/error.png" , "ScooterClient error");
+            logo.setHeight("410px");
+            logo.setWidth("800px");
+            verticalLayout.add(logo);
+            add(verticalLayout);
+            UI.getCurrent().navigate(ErrorView.class);
 
-        });
+        }else if (authResponse.getUser().getRole().getName().equals("ROLE_ADMIN")) {
+            VerticalLayout verticalLayout = new VerticalLayout();
+            verticalLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+            Image logo = new Image("images/error.png", "ScooterClient error");
+            logo.setHeight("410px");
+            logo.setWidth("800px");
+            verticalLayout.add(logo);
+            add(verticalLayout);
+            UI.getCurrent().navigate(ErrorView.class);
+        } else  {
+            user = authResponse.getUser();
+            addClassName("order-view");
+            createTitle();
+            createDataProvider(orderService);
+            add(createGrid());
+            createAddressColum(orderService, userService);
+            createDateColum();
+            createPriceColum();
+            createStatusPayColum(orderService, userService);
+            createStatusColum(orderService);
+            orderGrid.addItemClickListener(event -> {
+                if (event.getItem().getOrderStatus() == null || event.getItem().getOrderStatus().equals(OrderStatus.DELIVERED)) {
+                    try {
+                        basketOrder(orderService, event.getItem());
+                    } catch (JsonProcessingException e) {
+                        e.getMessage();
+                    }
+                }
+
+            });
+        }
 
     }
 
@@ -159,7 +183,7 @@ public class OrderView extends Div {
     }
 
     private void createPriceColum() {
-        price = orderGrid.addColumn(order -> order.getTotalPrice().toString() + " P").setHeader("Price");
+        price = orderGrid.addColumn(order -> order.getTotalPrice().toString() + " $").setHeader("Price");
 
     }
 
@@ -262,7 +286,7 @@ public class OrderView extends Div {
                     Button deliv = new Button("Deliver");
                     deliv.addClickListener(event -> {
                         delivOrder(orderService, order);
-                        span.setText("Status: Deliver");
+                        span.setText("Status: Delivered");
                     });
                     deliv.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
                     hl.add(deliv);
@@ -272,7 +296,7 @@ public class OrderView extends Div {
             } else if (order.getOrderStatus().equals(OrderStatus.CANCELED)) {
                 span.setText("Status: Сanceled");
             } else {
-                span.setText("Status: Deliver");
+                span.setText("Status: Delivered");
             }
 
             return hl;
@@ -338,7 +362,7 @@ public class OrderView extends Div {
         name = productGrid.addColumn(new ComponentRenderer<>(product -> {
             VerticalLayout hl = new VerticalLayout();
             hl.setAlignItems(FlexComponent.Alignment.AUTO);
-            Image logo = new Image("images/logo.png", "ScooterClient logo");
+            Image logo = new Image("images/" + product.getImage(), "ScooterClient logo");
             logo.setWidth("30px");
             logo.setHeight("30px");
             Span span = new Span();
@@ -381,70 +405,7 @@ public class OrderView extends Div {
     }
 
     private void pageProduct(Product showProduct, OrderService orderService) {
-        Dialog dialog = new Dialog();
-        dialog.setWidth("600px");
-
-        VerticalLayout verticalLayout = new VerticalLayout();
-        verticalLayout.setAlignItems(FlexComponent.Alignment.STRETCH);
-        Image logo = new Image("images/logo.png", "ScooterClient logo");
-        logo.setHeight("450px");
-        logo.setWidth("450px");
-        Span name = new Span();
-        Span description = new Span();
-        Span category = new Span();
-        Span descriptionCategory = new Span();
-        Span price = new Span();
-        Span stockStatus = new Span();
-
-        name.setText("Name : " + showProduct.getName());
-        description.setText("Description : " + showProduct.getDescription());
-        category.setText("Category : " + showProduct.getCategory().getName());
-        descriptionCategory.setText(showProduct.getCategory().getDescription());
-        BigDecimal p;
-        if (showProduct.getDiscount() != null) {
-            if (showProduct.getDiscount().getDiscountType().toString().equals("ABSOLUTE")) {
-                p = showProduct.getPrice().subtract(showProduct.getDiscount().getValue()).setScale(0, RoundingMode.HALF_UP);
-                price.setText("Price : " + p + "Р");
-            } else {
-                p = showProduct.getPrice().subtract(showProduct.getPrice().multiply(new BigDecimal(showProduct.getDiscount().getValue().doubleValue() / 100))).setScale(0, RoundingMode.HALF_UP);
-                price.setText("Price : " + p + "Р");
-            }
-
-        } else {
-            p = showProduct.getPrice();
-            price.setText("Price : " + p.doubleValue() + "Р");
-        }
-
-        if (showProduct.getStockStatus().getCount() > 0) {
-            stockStatus.setText("In stock");
-        } else {
-            stockStatus.setText("Out of stock");
-        }
-        verticalLayout.add(logo, name, description, category, descriptionCategory, price, stockStatus);
-        Button close = new Button("Cancel", e -> {
-            dialog.close();
-        });
-        NumberField countProduct = new NumberField();
-        countProduct.setValue(1d);
-        countProduct.setHasControls(true);
-        countProduct.setMin(1);
-        countProduct.setMax(showProduct.getStockStatus().getCount());
-
-        Button addToBasket = new Button("Add to basket", e -> {
-            Basket basket = new Basket();
-            basket.setUserId(user.getId());
-            basket.setUserOrder(null);
-            basket.setProductId(showProduct.getId());
-            basket.setPrice(new BigDecimal(p.doubleValue()));
-            basket.setCountProduct(countProduct.getValue().intValue());
-            basket.setDate(new Date());
-            boolean add = orderService.addProductBasket(basket, token);
-            if (add) {
-                Notification.show("Product added, go to the shopping cart!", 1000, Notification.Position.MIDDLE);
-            }
-        });
-        dialog.add(verticalLayout);
-        dialog.add(new Div(close, addToBasket, countProduct));
-        dialog.open();
+        PageProduct pageProduct = new PageProduct(orderService,showProduct,user,token);
+        pageProduct.pageProduct();
     }
 }

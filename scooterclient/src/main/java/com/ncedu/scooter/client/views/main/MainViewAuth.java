@@ -61,10 +61,7 @@ public class MainViewAuth extends AppLayout {
         Image logo = new Image("images/logo.png", "ScooterClient logo");
         logo.setId("logo");
         header.add(logo);
-        Avatar avatar = new Avatar();
-        avatar.setId("avatar");
         header.add(new H1("Scooter Shop"));
-        header.add(avatar);
         return header;
     }
 

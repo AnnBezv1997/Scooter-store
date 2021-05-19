@@ -69,12 +69,14 @@ public class UserController {
     }
 
     @PostMapping("/name/add")
+    @Operation(summary = "Add user name.", description = "")
     public User addUserName(@RequestBody @Valid NameAddRequest nameAddRequest)  {
        return userService.addName(nameAddRequest.getLogin(), nameAddRequest.getName());
 
     }
 
     @PostMapping("/login/update")
+    @Operation(summary = "Update user login", description = "")
     public boolean updateUserLogin(@RequestBody @Valid UpdateLoginRequest updateLoginRequest) {
         return userService.updateLogin(updateLoginRequest.getOldLogin(), updateLoginRequest.getNewLogin());
 

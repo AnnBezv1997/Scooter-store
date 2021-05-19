@@ -1,0 +1,66 @@
+version: '3'
+services:
+  eureka:
+      image: eureka-server:0.0.1-SNAPSHOT
+      restart: always
+      ports:
+        - "8761:8761"
+
+  mypostgres:
+     image: 'postgres:13.1-alpine'
+     container_name: mypostgres
+     environment:
+       - POSTGRES_PASSWORD=3362
+       - POSTGRES_USER=postgres
+       - POSTGRES_DB=NCproject
+     ports:
+       - "5432:5432"
+
+  gateway:
+     image: gateway:0.0.1-SNAPSHOT
+     restart: always
+     ports:
+       - "8080:8080"
+     environment:
+       - SERVICE_URL_DEFAULT_ZONE=http://eureka:8761/eureka/
+     depends_on:
+        - mypostgres
+        - eureka
+
+  product-info:
+     image: product-info:0.0.1-SNAPSHOT
+     restart: always
+     ports:
+        - "8084:8084"
+     environment:
+        - SERVICE_URL_DEFAULT_ZONE= http://eureka:8761/eureka/
+     depends_on:
+        - gateway
+        - mypostgres
+        - eureka
+  order:
+     image: order:0.0.1-SNAPSHOT
+     restart: always
+     ports:
+         - "8086:8086"
+     environment:
+         - SERVICE_URL_DEFAULT_ZONE= http://eureka:8761/eureka/
+     depends_on:
+         - product-info
+         - gateway
+         - mypostgres
+         - eureka
+
+  stock-service:
+     image: stock-service:0.0.1-SNAPSHOT
+     restart: always
+     ports:
+         - "8085:8085"
+     environment:
+         - SERVICE_URL_DEFAULT_ZONE= http://eureka:8761/eureka/
+     depends_on:
+         - product-info
+         - gateway
+         - mypostgres
+         - eureka
+

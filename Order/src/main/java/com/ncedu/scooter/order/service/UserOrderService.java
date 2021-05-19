@@ -16,15 +16,15 @@ public class UserOrderService {
 
     public boolean createOrder(UserOrder userOrder) {
         UserOrder newUserOrder = new UserOrder();
-
+        newUserOrder.setUserId(userOrder.getUserId());
         newUserOrder.setAddress(userOrder.getAddress());
         newUserOrder.setOrderStatus(userOrder.getOrderStatus());
         newUserOrder.setOrderStatusPay(userOrder.getOrderStatusPay());
         newUserOrder.setDate(userOrder.getDate());
-        newUserOrder.setUserId(userOrder.getUserId());
         newUserOrder.setTotalPrice(userOrder.getTotalPrice());
-        userOrderRepository.save(newUserOrder);
         basketService.createOrder(newUserOrder);
+        userOrderRepository.save(newUserOrder);
+
         return true;
     }
 

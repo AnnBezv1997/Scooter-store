@@ -1,12 +1,13 @@
 package com.ncedu.scooter.client.views.main;
 
-import com.ncedu.scooter.client.model.user.User;
 import com.ncedu.scooter.client.model.request.user.AuthResponse;
 import com.ncedu.scooter.client.views.address.AddressView;
 import com.ncedu.scooter.client.views.catalog.CatalogView;
 import com.ncedu.scooter.client.views.catalog.CatalogViewAdmin;
+import com.ncedu.scooter.client.views.login.LoginView;
 import com.ncedu.scooter.client.views.order.BasketView;
 import com.ncedu.scooter.client.views.order.OrderView;
+import com.ncedu.scooter.client.views.register.RegisterView;
 import com.ncedu.scooter.client.views.user.UserView;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentUtil;
@@ -53,7 +54,7 @@ public class ViewCatalog extends AppLayout {
         layout.setAlignItems(FlexComponent.Alignment.CENTER);
         layout.add(new DrawerToggle());
         viewTitle = new H1();
-        layout.add(viewTitle);
+       // layout.add(viewTitle);
         layout.add(new Avatar());
         return layout;
     }
@@ -75,19 +76,24 @@ public class ViewCatalog extends AppLayout {
     }
 
     private Tabs createMenu() {
+        AuthResponse authResponse = (AuthResponse) VaadinSession.getCurrent().getAttribute("authResponse");
         final Tabs tabs = new Tabs();
         tabs.setOrientation(Tabs.Orientation.VERTICAL);
         tabs.addThemeVariants(TabsVariant.LUMO_MINIMAL);
         tabs.setId("tabs");
-        tabs.add(createMenuItems());
+            tabs.add(createMenuItems());
+
         return tabs;
     }
 
     private Component[] createMenuItems() {
         AuthResponse authResponse = (AuthResponse) VaadinSession.getCurrent().getAttribute("authResponse");
-        User user = authResponse.getUser();
-        if (user.getRole().getName().equals("ROLE_ADMIN")) {
-            return new Tab[]{createTab("Catalog Settings", CatalogViewAdmin.class), createTab("Catalog user", CatalogView.class)};
+        if (authResponse == null || authResponse.getUser().getRole().equals("ROLE_USER")) {
+            return new Tab[]{createTab("Login", LoginView.class), createTab("Registration", RegisterView.class)};
+        } else if (authResponse.getUser().getRole().getName().equals("ROLE_ADMIN")) {
+
+            return new Tab[]{createTab("Catalog Settings", CatalogViewAdmin.class), createTab("Catalog user", CatalogView.class),
+                    createTab("Log out", LoginView.class)};
 
         } else {
             return new Tab[]{createTab("Catalog products", CatalogView.class), createTab("User settings", UserView.class),
@@ -96,6 +102,8 @@ public class ViewCatalog extends AppLayout {
 
         }
     }
+
+
 
     private static Tab createTab(String text, Class<? extends Component> navigationTarget) {
         final Tab tab = new Tab();

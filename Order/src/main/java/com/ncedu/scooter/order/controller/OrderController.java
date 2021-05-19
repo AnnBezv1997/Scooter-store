@@ -2,6 +2,7 @@ package com.ncedu.scooter.order.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ncedu.scooter.order.controller.request.PriceResponse;
 import com.ncedu.scooter.order.controller.request.ProductRequest;
 import com.ncedu.scooter.order.entity.Basket;
 import com.ncedu.scooter.order.entity.UserOrder;
@@ -11,14 +12,9 @@ import com.ncedu.scooter.order.service.UserOrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -68,8 +64,8 @@ public class OrderController {
 
     @Operation(summary = "Get total price product", description = "")
     @GetMapping("/total/price/{id}")
-    public BigDecimal getTotalPrice(@PathVariable(name = "id") int userId) {
-        return basketService.totalPrice(userId);
+    public PriceResponse getTotalPriceAndTotalDiscount(@PathVariable(name = "id") int userId) {
+        return basketService.totalPriceAndTotalDickount(userId);
     }
 
     @Operation(summary = "Create order.", description = "")

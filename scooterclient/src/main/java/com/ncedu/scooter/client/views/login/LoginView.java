@@ -25,6 +25,8 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 
+import static com.ncedu.scooter.client.views.login.Message.MESSAGE;
+
 
 @CssImport("./views/login/login-view.css")
 @Route(value = "", layout = MainViewAuth.class)
@@ -62,8 +64,10 @@ public class LoginView extends Div {
                 save.getUI().ifPresent(ui -> {
                     if (user.getRole().getName().equals("ROLE_ADMIN")) {
                         ui.navigate("admin");
-                    } else {
+                    } else if(user.getRole().getName().equals("ROLE_USER")){
                         ui.navigate("catalog");
+                    }else {
+                        ui.navigate("errorforbidden");
                     }
 
                     //здесь будет переходить на страницу каталога
@@ -71,14 +75,16 @@ public class LoginView extends Div {
                 clearForm();
             } else {
 
-                Notification.show("Sorry:( Try again or registration.", 5000, Notification.Position.MIDDLE);
+                notification(MESSAGE.get("Error"), 5000);
                 clearForm();
             }
 
 
         });
     }
-
+    private Notification notification(String message, int time) {
+        return Notification.show(message, time, Notification.Position.MIDDLE);
+    }
     private void clearForm() {
         binder.setBean(new AuthRequest());
     }
@@ -123,7 +129,7 @@ public class LoginView extends Div {
             countryCode.setItems("+7");
             countryCode.addCustomValueSetListener(e -> countryCode.setValue(e.getDetail()));
 
-            number.setPattern("\\d*}");
+            number.setPattern("\\d*");
             number.setPreventInvalidInput(true);
 
             HorizontalLayout layout = new HorizontalLayout(countryCode, number);
