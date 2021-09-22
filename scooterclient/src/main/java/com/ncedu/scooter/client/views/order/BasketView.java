@@ -36,6 +36,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -85,7 +86,7 @@ public class BasketView extends Div {
             add(createGrid());
             createProductColum(orderService);
             createCountColumn(orderService);
-            createPriceColumn();
+            createPriceColumn(orderService);
             createDeleteColumn(orderService);
             totalPrice(orderService);
             totalPrice.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -137,12 +138,19 @@ public class BasketView extends Div {
             VerticalLayout hl = new VerticalLayout();
             hl.setAlignItems(FlexComponent.Alignment.AUTO);
             Product product = orderService.getProduct(basket.getProductId(), token);
-            Image logo = new Image("images/" + product.getImage(), "ScooterClient logo");
-            Span span = new Span();
-            span.setClassName("name");
-            span.setText(product.getName());
-            hl.add(logo, span);
-            return hl;
+            if(product != null){
+                Image logo = new Image("images/" + product.getImage(), "ScooterClient logo");
+                Span span = new Span();
+                span.setClassName("name");
+                span.setText(product.getName());
+                hl.add(logo, span);
+                return hl;
+            }else {
+                Image logo = new Image("images/logo.png", "ScooterClient logo");
+                hl.add(logo);
+                return hl;
+            }
+
         })).setHeader("Product");
     }
 
@@ -152,47 +160,65 @@ public class BasketView extends Div {
             hl.setAlignItems(FlexComponent.Alignment.AUTO);
 
             Product product = orderService.getProduct(basket.getProductId(), token);
-            IntegerField countProduct = new IntegerField();
-            countProduct.setValue(basket.getCountProduct());
-            countProduct.setHasControls(true);
-            countProduct.setMin(1);
-            countProduct.setMax(product.getStockStatus().getCount());
+            if(product != null){
+                IntegerField countProduct = new IntegerField();
+                countProduct.setValue(basket.getCountProduct());
+                countProduct.setHasControls(true);
+                countProduct.setMin(1);
+                countProduct.setMax(product.getStockStatus().getCount());
 
-            countProduct.addValueChangeListener(numberField -> {
-                basket.setCountProduct(numberField.getValue());
-                try {
-                    boolean b1 = orderService.updateCountProductBasket(basket, token);
-                    if (b1) {
-                        createDataProvider(orderService);
-                        totalPrice.setText("Total discount: " + orderService.totalPrice(user.getId(), token).getTotalDiscount() + " $. " +
-                                "Total price: " + orderService.totalPrice(user.getId(), token).getTotalPrice() + " $. Make an order");
-                        productGrid.setDataProvider(dataProvider);
+                countProduct.addValueChangeListener(numberField -> {
+                    basket.setCountProduct(numberField.getValue());
+                    try {
+                        boolean b1 = orderService.updateCountProductBasket(basket, token);
+                        if (b1) {
+                            createDataProvider(orderService);
+                            totalPrice.setText("Total discount: " + orderService.totalPrice(user.getId(), token).getTotalDiscount() + " $. " +
+                                    "Total price: " + orderService.totalPrice(user.getId(), token).getTotalPrice() + " $. Make an order");
+                            productGrid.setDataProvider(dataProvider);
 
+                        }
+                    } catch (JsonProcessingException ex) {
+                        ex.getMessage();
                     }
-                } catch (JsonProcessingException ex) {
-                    ex.getMessage();
-                }
 
-            });
-            Span span = new Span();
-            span.setClassName("count");
-            span.setText("Count: " + basket.getCountProduct() + " pcs.");
-            hl.add(span, countProduct);
-            return hl;
+                });
+                Span span = new Span();
+                span.setClassName("count");
+                span.setText("Count: " + basket.getCountProduct() + " pcs.");
+                hl.add(span, countProduct);
+                return hl;
+            }else {
+                Span span = new Span();
+                span.setClassName("count");
+                span.setText("The product is sold out");
+                hl.add(span);
+                return hl;
+            }
+
         })).setHeader("Count");
     }
 
-    private void createPriceColumn() {
+    private void createPriceColumn(OrderService orderService) {
         price = productGrid.addColumn(new ComponentRenderer<>(basket -> {
             VerticalLayout hl = new VerticalLayout();
             hl.setAlignItems(FlexComponent.Alignment.AUTO);
+            Product product = orderService.getProduct(basket.getProductId(), token);
+            if(product != null){
+                Span span = new Span();
+                span.setClassName("price");
 
-            Span span = new Span();
-            span.setClassName("price");
+                span.setText("Price: " + basket.getPrice().multiply(new BigDecimal(basket.getCountProduct()).setScale(1,BigDecimal.ROUND_HALF_UP)) + " $.");
+                hl.add(span);
+                return hl;
+            }else {
+                Span span = new Span();
+                span.setClassName("count");
+                span.setText("");
+                hl.add(span);
+                return hl;
+            }
 
-            span.setText("Price: " + basket.getPrice().doubleValue()*basket.getCountProduct() + " $.");
-            hl.add(span);
-            return hl;
         })).setHeader("Price");
     }
 
@@ -200,24 +226,26 @@ public class BasketView extends Div {
         delete = productGrid.addColumn(new ComponentRenderer<>(basket -> {
             VerticalLayout hl = new VerticalLayout();
             hl.setAlignItems(FlexComponent.Alignment.AUTO);
-            Button button = new Button("Delete", deleteEvent -> {
 
-                try {
-                    boolean b1 = orderService.deleteProductBasket(basket, token);
-                    if (b1) {
-                        createDataProvider(orderService);
-                        totalPrice.setText("Total discount: " + orderService.totalPrice(user.getId(), token).getTotalDiscount() + " $. " +
-                                "Total price: " + orderService.totalPrice(user.getId(), token).getTotalPrice() + " $. Make an order");
-                        productGrid.setDataProvider(dataProvider);
+                Button button = new Button("Delete", deleteEvent -> {
+
+                    try {
+                        boolean b1 = orderService.deleteProductBasket(basket, token);
+                        if (b1) {
+                            createDataProvider(orderService);
+                            totalPrice.setText("Total discount: " + orderService.totalPrice(user.getId(), token).getTotalDiscount() + " $. " +
+                                    "Total price: " + orderService.totalPrice(user.getId(), token).getTotalPrice() + " $. Make an order");
+                            productGrid.setDataProvider(dataProvider);
+                        }
+                    } catch (JsonProcessingException ex) {
+                        ex.getMessage();
                     }
-                } catch (JsonProcessingException ex) {
-                    ex.getMessage();
-                }
 
 
-            });
-            hl.add(button);
-            return hl;
+                });
+                hl.add(button);
+                return hl;
+
         })).setHeader("Delete");
     }
 
@@ -258,9 +286,18 @@ public class BasketView extends Div {
                     }
 
                 });
+        Button newAddress = new Button("New address");
+        newAddress.addClickListener( event -> {
+            newAddress.getUI().ifPresent(ui -> {
+                ui.navigate("address");
+                dialog.close();
+            });
+        });
+        if(addressComboBox.isEmpty()){
+            verticalLayout.add(newAddress);
+        }
         verticalLayout.add(addressComboBox);
         Button close = new Button("Cancel", e -> {
-
             dialog.close();
         });
         Button next = new Button("Next ->", e -> {
@@ -284,8 +321,9 @@ public class BasketView extends Div {
             code.setErrorMessage("Please enter a valid CVC/CVV code");
 
             Button closepay = new Button("Cancel", e1 -> {
+                userOrder.setOrderStatusPay(OrderStatusPay.NOT);
                 boolean b = orderService.createOrder(userOrder, token);
-                Notification.show("Go to the orders section!", 1500, Notification.Position.MIDDLE);
+                Notification.show("Go to the orders section!", 2000, Notification.Position.MIDDLE);
                 dialogPay.close();
                 dialog.close();
             });
@@ -298,11 +336,28 @@ public class BasketView extends Div {
                     if (b) {
                         dialogPay.close();
                         dialog.close();
-                        Notification.show("Done!Go to the orders section!", 1500, Notification.Position.MIDDLE);
+                        try {
+                            createDataProvider(orderService);
+                            productGrid.setDataProvider(dataProvider);
+                        }catch (JsonProcessingException ex){
+                            ex.getMessage();
+                        }
+
+                        Notification.show("Done!Go to the orders section!", 2000, Notification.Position.MIDDLE);
+                    }else{
+                        try {
+                            createDataProvider(orderService);
+                            productGrid.setDataProvider(dataProvider);
+                        }catch (JsonProcessingException ex){
+                            ex.getMessage();
+                        }
+                        Notification.show("Some of your products have been deleted! Check your basket!", 2000, Notification.Position.MIDDLE);
+                        dialogPay.close();
+                        dialog.close();
                     }
 
                 } else {
-                    Notification.show("Please, check your credit card details!", 1500, Notification.Position.MIDDLE);
+                    Notification.show("Please, check your credit card details!", 2000, Notification.Position.MIDDLE);
                 }
             });
             pay.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -320,51 +375,5 @@ public class BasketView extends Div {
 
     }
 
-    private void payOrder(OrderService orderService, Dialog dialog, UserOrder userOrder) {
-        Dialog dialogPay = new Dialog();
-        dialogPay.setWidth("400px");
-        VerticalLayout verticalLayout = new VerticalLayout();
-        verticalLayout.setAlignItems(FlexComponent.Alignment.STRETCH);
 
-        TextField cardNumber = new TextField("Credit card number");
-        cardNumber.setPlaceholder("1234 5678 9123 4567");
-        cardNumber.setPattern("[\\d ]*");
-        cardNumber.setPreventInvalidInput(true);
-        cardNumber.setRequired(true);
-        cardNumber.setErrorMessage("Please enter a valid credit card number");
-
-        TextField code = new TextField("CVC/CVV code");
-        code.setPlaceholder("123");
-        code.setPattern("[\\d ]*");
-        code.setPreventInvalidInput(true);
-        code.setRequired(true);
-        code.setErrorMessage("Please enter a valid CVC/CVV code");
-
-        Button close = new Button("Cancel", e -> {
-            Notification.show("Go to the orders section!", 1500, Notification.Position.MIDDLE);
-            dialogPay.close();
-            dialog.close();
-        });
-        Button pay = new Button("Pay", e -> {
-            String card = cardNumber.getValue().replaceAll(" ", "");
-            String cod = code.getValue().replaceAll(" ", "");
-            if (card.length() == 16 && cod.length() == 3) {
-                userOrder.setOrderStatusPay(OrderStatusPay.YES);
-                boolean b = orderService.updateOrder(userOrder, token);
-                if (b) {
-                    dialogPay.close();
-                    dialog.close();
-                    Notification.show("Done!Go to the orders section!", 1500, Notification.Position.MIDDLE);
-                }
-
-            } else {
-                Notification.show("Please, check your credit card details!", 1500, Notification.Position.MIDDLE);
-            }
-        });
-        pay.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        verticalLayout.add(cardNumber, code);
-        dialogPay.add(verticalLayout);
-        dialogPay.add(new Div(close, pay));
-        dialogPay.open();
-    }
 }

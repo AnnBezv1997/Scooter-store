@@ -17,7 +17,7 @@
     align-items: center;
 }
 .catalog-view vaadin-grid img {
-    max-height: 7em;
+    max-height: 6em;
 }
 .catalog-view .name {
     overflow: hidden;

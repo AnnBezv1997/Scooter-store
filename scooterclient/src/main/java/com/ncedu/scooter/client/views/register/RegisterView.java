@@ -2,6 +2,7 @@ package com.ncedu.scooter.client.views.register;
 
 
 import com.ncedu.scooter.client.model.request.user.RegistrationRequest;
+import com.ncedu.scooter.client.model.user.Address;
 import com.ncedu.scooter.client.service.RegistrationService;
 import com.ncedu.scooter.client.views.main.MainViewAuth;
 import com.vaadin.flow.component.Component;
@@ -14,6 +15,7 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
@@ -30,13 +32,16 @@ public class RegisterView extends Div {
 
 
     private PhoneNumberField login = new PhoneNumberField("Phone number");
-    private TextField address = new TextField("Address");
     private PasswordField password = new PasswordField("Password.At least 6 characters:");
 
     private Button cancel = new Button("Cancel");
     private Button save = new Button("Register");
 
-    private Binder<RegistrationRequest> binder = new Binder(RegistrationRequest.class);
+
+    private TextField address = new TextField("Address");
+
+
+
 
     public RegisterView(RegistrationService registrationService) {
         addClassName("register-view");
@@ -44,15 +49,27 @@ public class RegisterView extends Div {
         add(createTitle());
         add(createFormLayout());
         add(createButtonLayout());
-        binder.bindInstanceFields(this);
-        clearForm();
+
+        address.setPattern("^[a-zA-Zа-яА-Я]+(?:[\\s-][a-zA-Zа-яА-Я]+)*$");
+     //   address.setRequired(false);
+
 
         cancel.addClickListener(e -> clearForm());
         save.addClickListener(e -> {
-            String number = binder.getBean().getLogin().replaceAll(" ", "");
-            String password = binder.getBean().getPassword();
-            if (number.length() == 12 && number.startsWith("+") && password.length() >= 6) {
-                String response = registrationService.registration(binder.getBean());
+
+            String number = login.getValue().replaceAll(" ", "");
+            String passwordUser = password.getValue();
+
+            Address userAddress = new Address();
+            if(!address.isEmpty()){
+                userAddress.setAddress(address.getValue());
+
+            }else{
+                userAddress = null;
+            }
+            if (10 <= number.length() && number.length() <= 14 && number.startsWith("+") && passwordUser.length() >= 6) {
+                String userNumber = number.replaceAll("\\+","");
+                String response = registrationService.registration(new RegistrationRequest(userNumber,passwordUser,userAddress));
                 if (response.equals("OK")) {
                     notification(MESSAGE.get("Welcome"), 5000);
                     clearForm();
@@ -69,7 +86,9 @@ public class RegisterView extends Div {
         return Notification.show(message, time, Notification.Position.MIDDLE);
     }
     private void clearForm() {
-        binder.setBean(new RegistrationRequest());
+       login.clear();
+       password.clear();
+       address.clear();
     }
 
     private Component createTitle() {
@@ -78,12 +97,16 @@ public class RegisterView extends Div {
 
     private Component createFormLayout() {
         VerticalLayout wrapper = new VerticalLayout();
-        FormLayout formLayout = new FormLayout();
+        wrapper.setAlignItems(FlexComponent.Alignment.CENTER);
+        login.setWidth("500px");
+        password.setWidth("500px");
+        address.setWidth("500px");
         login.setErrorMessage("Please enter a valid phone");
-        formLayout.add(login);
-        formLayout.add(password);
-        formLayout.add(address);
-        wrapper.add(formLayout);
+        wrapper.add(login);
+        wrapper.add(password);
+        wrapper.add(password);
+        wrapper.add(address);
+
         return wrapper;
     }
 
@@ -102,14 +125,17 @@ public class RegisterView extends Div {
 
         PhoneNumberField(String label) {
             setLabel(label);
-            countryCode.setWidth("120px");
-            countryCode.setPlaceholder("Country");
+
+            countryCode.setWidth("140px");
+            countryCode.setPlaceholder("+");
             countryCode.setPattern("\\+\\d*");
             countryCode.setPreventInvalidInput(true);
-            countryCode.setItems("+7");
+            countryCode.setRequired(true);
+            //countryCode.setItems("+","+7");
             countryCode.addCustomValueSetListener(e -> countryCode.setValue(e.getDetail()));
 
             number.setPattern("\\d*");
+            number.setRequired(true);
             number.setPreventInvalidInput(true);
             HorizontalLayout layout = new HorizontalLayout(countryCode, number);
             layout.setFlexGrow(1.0, number);

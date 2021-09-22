@@ -38,20 +38,22 @@ public class LoginView extends Div {
     private Button cancel = new Button("Cancel");
     private Button save = new Button("Login");
 
-    private Binder<AuthRequest> binder = new Binder(AuthRequest.class);
+    //private Binder<AuthRequest> binder = new Binder(AuthRequest.class);
 
     public LoginView(AuthService authService) {
         addClassName("login-view");
         add(createTitle());
         add(createFormLayout());
         add(createButtonLayout());
-        binder.bindInstanceFields(this);
+        //binder.bindInstanceFields(this);
         clearForm();
 
         cancel.addClickListener(e -> clearForm());
         save.addClickListener(e -> {
-
-            AuthResponse authResponse = authService.auth(binder.getBean());
+            String authLogin = login.getValue().replaceAll("\\+","");
+            authLogin.replaceAll(" ","");
+            String authPassword = password.getValue();
+            AuthResponse authResponse = authService.auth(new AuthRequest(authLogin, authPassword));
 
             if (authResponse != null) {
                 Notification.show("Welcome!", 4000, Notification.Position.MIDDLE);
@@ -86,7 +88,8 @@ public class LoginView extends Div {
         return Notification.show(message, time, Notification.Position.MIDDLE);
     }
     private void clearForm() {
-        binder.setBean(new AuthRequest());
+        login.clear();
+        password.clear();
     }
 
     private Component createTitle() {
@@ -122,14 +125,17 @@ public class LoginView extends Div {
 
         PhoneNumberField(String label) {
             setLabel(label);
-            countryCode.setWidth("120px");
-            countryCode.setPlaceholder("Country");
+
+            countryCode.setWidth("140px");
+            countryCode.setPlaceholder("+");
             countryCode.setPattern("\\+\\d*");
             countryCode.setPreventInvalidInput(true);
-            countryCode.setItems("+7");
+            countryCode.setRequired(true);
+            //countryCode.setItems("+","+7");
             countryCode.addCustomValueSetListener(e -> countryCode.setValue(e.getDetail()));
 
             number.setPattern("\\d*");
+            number.setRequired(true);
             number.setPreventInvalidInput(true);
 
             HorizontalLayout layout = new HorizontalLayout(countryCode, number);

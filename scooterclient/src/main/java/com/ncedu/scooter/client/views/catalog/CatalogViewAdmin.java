@@ -83,9 +83,11 @@ public class CatalogViewAdmin extends Div {
         CatalogView catalogView = new CatalogView(service, orderService);
         if (authResponse == null) {
             catalogView.errorPage();
+            UI.getCurrent().navigate(ErrorView.class);
 
         } else if (!authResponse.getUser().getRole().getName().equals("ROLE_ADMIN")) {
            catalogView.errorPage();
+            UI.getCurrent().navigate(ErrorView.class);
         } else if (authResponse.getUser().getRole().getName().equals("ROLE_ADMIN")){
             user = authResponse.getUser();
             addClassName("catalog-view-admin");
@@ -134,6 +136,9 @@ public class CatalogViewAdmin extends Div {
                 Product showProduct = event.getItem();
                 try {
                     pageProduct(showProduct, productService);
+                    createDataProvider(productService);
+                    productGrid.setDataProvider(dataProvider);
+                    productGrid.getDataProvider().refreshAll();
                 } catch (JsonProcessingException e) {
                     e.getMessage();
                 }
@@ -238,12 +243,12 @@ public class CatalogViewAdmin extends Div {
             if (p.getDiscount() != null) {
                 if (p.getDiscount().getDiscountType().toString().equals("ABSOLUTE")) {
                     double totalDiscount = p.getDiscount().getValue().doubleValue();
-                    BigDecimal price = p.getPrice().subtract(new BigDecimal(totalDiscount));
+                    BigDecimal price = p.getPrice().subtract(new BigDecimal(totalDiscount)).setScale(1,BigDecimal.ROUND_HALF_UP);;
                     span1.setText(MESSAGE.get("New price") + price + " $.");
                     span2.setText(MESSAGE.get("Old price") + p.getPrice() + " $.");
                 } else {
                     double totalDiscount = p.getPrice().multiply(new BigDecimal(p.getDiscount().getValue().doubleValue() / 100)).doubleValue();
-                    BigDecimal price = p.getPrice().subtract(new BigDecimal(totalDiscount));
+                    BigDecimal price = p.getPrice().subtract(new BigDecimal(totalDiscount)).setScale(1,BigDecimal.ROUND_HALF_UP);
                     span1.setText(MESSAGE.get("New price") + price + " $.");
                     span2.setText(MESSAGE.get("Old price") + p.getPrice() + " $.");
                 }
@@ -329,14 +334,19 @@ public class CatalogViewAdmin extends Div {
 
 
     private void pageProduct(Product showProduct, ProductServiceAdmin productService) throws JsonProcessingException {
-       PageProductAdmin pageProductAdmin = new PageProductAdmin(productService,showProduct,token);
+       PageProductAdmin pageProductAdmin = new PageProductAdmin(productService, showProduct, token, new Image());
        pageProductAdmin.pageProduct(productGrid, dataProvider);
+       createDataProvider(productService);
+       productGrid.setDataProvider(dataProvider);
+
 
     }
 
     private void pageNewProduct(ProductServiceAdmin productService) throws JsonProcessingException {
         PageProductAdmin pageProductAdmin = new PageProductAdmin(productService,token);
         pageProductAdmin.pageNewProduct(productGrid, dataProvider);
+        createDataProvider(productService);
+        productGrid.setDataProvider(dataProvider);
     }
 
 

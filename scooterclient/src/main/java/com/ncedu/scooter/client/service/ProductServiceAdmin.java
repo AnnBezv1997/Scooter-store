@@ -44,8 +44,8 @@ public class ProductServiceAdmin {
         return scooterRestTemplate.post(URL.get("ADMIN_PAGE_PRODUCTS"), ProductResponse.class, productRequest, token).getBody();
     }
 
-    public boolean updateProduct(Product product, String token) {
-        return scooterRestTemplate.post(URL.get("ADMIN_UPDATE_PRODUCT"), boolean.class, product, token).getBody();
+    public Product updateProduct(Product product, String token) {
+        return scooterRestTemplate.post(URL.get("ADMIN_UPDATE_PRODUCT"), Product.class, product, token).getBody();
     }
 
     public boolean updateStockStatus(StockStatus stockStatus, String token) {
@@ -72,8 +72,8 @@ public class ProductServiceAdmin {
         return scooterRestTemplate.post(URL.get("ADMIN_DELETE_DISCOUNT"), boolean.class, discount, token).getBody();
     }
 
-    public boolean saveProduct(Product product, String token) {
-        return scooterRestTemplate.post(URL.get("ADMIN_ADD_PRODUCT"), boolean.class, product, token).getBody();
+    public Product saveProduct(Product product, String token) {
+        return scooterRestTemplate.post(URL.get("ADMIN_ADD_PRODUCT"), Product.class, product, token).getBody();
     }
 
     public boolean saveStockStatus(StockStatus stockStatus, String token) {

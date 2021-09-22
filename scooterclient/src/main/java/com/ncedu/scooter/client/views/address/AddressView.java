@@ -1,7 +1,6 @@
 package com.ncedu.scooter.client.views.address;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.ncedu.scooter.client.model.request.user.AddressRequest;
 import com.ncedu.scooter.client.model.request.user.AuthResponse;
 import com.ncedu.scooter.client.model.user.Address;
 import com.ncedu.scooter.client.model.user.User;
@@ -21,12 +20,14 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 
+import java.sql.SQLOutput;
 import java.util.ArrayList;
 
 import static com.ncedu.scooter.client.views.address.Message.MESSAGE;
@@ -118,13 +119,17 @@ public class AddressView extends Div {
                         Dialog deleteDialog = new Dialog();
                         deleteDialog.add(new Text(MESSAGE.get("Сonfi")));
                         Button no = new Button("No", buttonClickEvent -> deleteDialog.close());
-                        Button yes = new Button(MESSAGE.get("Yes"));
+                        Button yes = new Button("Yes");
                         yes.addClickListener(eventDelete -> {
                             String response = userService.deleteAddress(event.getItem(), token);
                             if (response.equals("OK")) {
                                 notification(MESSAGE.get("Done"), 2500);
-                                addressResponse.remove(event.getItem());
-                                addressGrid.setItems(addressResponse);
+                                try {
+                                    addressGrid.setItems(userService.getAllAddress(user.getLogin(), token));
+                                } catch (JsonProcessingException e1) {
+                                    e1.getMessage();
+                                }
+
                                 deleteDialog.close();
                                 dialog.close();
                             } else {
@@ -145,27 +150,46 @@ public class AddressView extends Div {
 
     private void newAddress(UserService userService, ArrayList<Address> addressResponse) {
         Dialog dialog = new Dialog();
-        TextField newAddress = new TextField(MESSAGE.get("New"));
+        HorizontalLayout horizontalLayout = new HorizontalLayout();
+        horizontalLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+
+        TextField address = new TextField("Address");
+      //  address.setPattern("^[a-zA-Zа-яА-Я]+(?:[\\s-][a-zA-Zа-яА-Я]+)*$");
+        address.setPreventInvalidInput(true);
+        address.setRequired(true);
+        horizontalLayout.add(address);
+
         Button close = new Button(MESSAGE.get("Cancel"), event -> {
             dialog.close();
         });
         Button save = new Button(MESSAGE.get("Save"), event -> {
 
-            String newAddressValue = newAddress.getValue();
-            Address response = userService.addUserAddress(new AddressRequest(newAddressValue, user.getLogin()), token);
-            if (response != null) {
-                notification(MESSAGE.get("Done"), 2500);
-                addressResponse.add(response);
-                addressGrid.setItems(addressResponse);
-                dialog.close();
-            } else {
+            Address newAddressValue = new Address();
+            newAddressValue.setAddress(address.getValue());
+
+            newAddressValue.setUser(user);
+            if (address.getValue() == null) {
                 notification(MESSAGE.get("Error"), 4000);
+            } else {
+                Address response = userService.addUserAddress(newAddressValue, token);
+                System.out.println(response);
+                System.out.println(address.getValue());
+                if (response != null) {
+                    notification(MESSAGE.get("Done"), 2500);
+                    try {
+                        addressGrid.setItems(userService.getAllAddress(user.getLogin(), token));
+                    } catch (JsonProcessingException e1) {
+                        e1.getMessage();
+                    }
+                    dialog.close();
+                } else {
+                    notification(MESSAGE.get("Error"), 4000);
+                }
             }
 
-        }
-        );
-        dialog.add(new Text("Add your name"));
-        dialog.add(new Div(newAddress));
+
+        });
+        dialog.add(horizontalLayout);
         dialog.add(new Div(close, save));
         dialog.open();
 

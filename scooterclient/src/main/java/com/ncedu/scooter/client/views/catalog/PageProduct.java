@@ -54,14 +54,14 @@ public class PageProduct {
         if (showProduct.getDiscount() != null) {
             if (showProduct.getDiscount().getDiscountType().toString().equals("ABSOLUTE")) {
                 double totalDiscount = showProduct.getDiscount().getValue().doubleValue();
-                p = showProduct.getPrice().subtract(new BigDecimal(totalDiscount));
+                p = showProduct.getPrice().subtract(new BigDecimal(totalDiscount)).setScale(1,BigDecimal.ROUND_HALF_UP);;
                 price.setText(MESSAGE.get("New price") + p + " $.");
                 oldPrice.setText(MESSAGE.get("Old price") + showProduct.getPrice() + " $.");
 
 
             } else {
                 double totalDiscount = showProduct.getPrice().multiply(new BigDecimal(showProduct.getDiscount().getValue().doubleValue() / 100)).doubleValue();
-                p = showProduct.getPrice().subtract(new BigDecimal(totalDiscount));
+                p = showProduct.getPrice().subtract(new BigDecimal(totalDiscount)).setScale(1,BigDecimal.ROUND_HALF_UP);
                 price.setText(MESSAGE.get("New price") + p + " $.");
                 oldPrice.setText(MESSAGE.get("Old price") + showProduct.getPrice() + " $.");
             }
@@ -92,12 +92,15 @@ public class PageProduct {
                 basket.setUserId(user.getId());
                 basket.setUserOrder(null);
                 basket.setProductId(showProduct.getId());
-                basket.setPrice(new BigDecimal(p.doubleValue()));
+                basket.setPrice(p.setScale(1,BigDecimal.ROUND_HALF_UP));
                 basket.setCountProduct(countProduct.getValue().intValue());
                 basket.setDate(new Date());
                 boolean add = orderService.addProductBasket(basket, token);
                 if (add) {
                     notification(MESSAGE.get("AddDone"), 1500);
+                }else{
+                    notification("Sorry, the product is sold out :(", 2000);
+                    dialog.close();
                 }
             });
             verticalLayout.add(new Div(addToBasket, countProduct));

@@ -66,7 +66,7 @@ public class ProductService {
     }
 
 
-    public boolean saveProduct(Product product) {
+    public Product saveProduct(Product product) {
             Product newProduct = new Product();
             newProduct.setName(product.getName());
             newProduct.setDescription(product.getDescription());
@@ -76,13 +76,14 @@ public class ProductService {
             newProduct.setCategory(product.getCategory());
             newProduct.setDiscount(product.getDiscount());
             productRepository.save(newProduct);
-            return true;
+
+            return newProduct;
 
     }
 
-    public boolean updateProduct(Product product) {
+    public Product updateProduct(Product product) {
         productRepository.save(product);
-        return true;
+        return productRepository.findById(product.getId()).get();
     }
 
     public boolean deleteProduct(int id) throws ExceptionNotFound {

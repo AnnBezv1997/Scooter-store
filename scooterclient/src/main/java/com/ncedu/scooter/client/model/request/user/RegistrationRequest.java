@@ -1,5 +1,6 @@
 package com.ncedu.scooter.client.model.request.user;
 
+import com.ncedu.scooter.client.model.user.Address;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,5 +16,5 @@ public class RegistrationRequest {
     @NotEmpty
     private String password;
 
-    private String address;
+    private Address address;
 }

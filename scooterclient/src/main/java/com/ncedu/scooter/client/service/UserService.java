@@ -23,7 +23,7 @@ public class UserService {
         this.scooterRestTemplate = scooterRestTemplate;
     }
 
-    public Address addUserAddress(AddressRequest addressRequest, String token) {
+    public Address addUserAddress(Address addressRequest, String token) {
         return scooterRestTemplate.post(URL.get("ADD_ADDRESS"), Address.class, addressRequest, token).getBody();
     }
 

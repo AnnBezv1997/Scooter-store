@@ -42,8 +42,6 @@ public class CategoryService {
         if (categ == null) {
             throw new ExceptionNotFound(CATEGORY_NOT_FOUND);
         }else if (category.getCategoryParent() == null) {
-            //categ.setName(category.getName());
-            //categ.setDescription(category.getDescription());
             categoryRepository.save(category);
             return true;
         }else if(category.equals(category.getCategoryParent().getCategoryParent())){

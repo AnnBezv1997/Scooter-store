@@ -7,10 +7,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 
-@Data
-@JsonIgnoreProperties(ignoreUnknown = true)
-@NoArgsConstructor
 
+@Data
+@NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class  Address {
 
     @JsonCreator
@@ -21,9 +21,7 @@ public class  Address {
     }
 
     private Integer id;
-
     private String address;
-
     private User user;
 
 }

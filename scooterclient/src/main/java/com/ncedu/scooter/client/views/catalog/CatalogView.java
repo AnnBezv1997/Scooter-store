@@ -107,8 +107,10 @@ public class CatalogView extends Div {
 
             productGrid.addItemClickListener(event -> {
                 Product showProduct = event.getItem();
-                pageProduct(showProduct, orderService);
-
+                pageProduct(showProduct, orderService,productService);
+                createDataProvider(productService);
+                productGrid.setDataProvider(dataProvider);
+                productGrid.getDataProvider().refreshAll();
             });
         }
 
@@ -188,12 +190,12 @@ public class CatalogView extends Div {
             if (p.getDiscount() != null) {
                 if (p.getDiscount().getDiscountType().toString().equals("ABSOLUTE")) {
                     double totalDiscount = p.getDiscount().getValue().doubleValue();
-                    BigDecimal price = p.getPrice().subtract(new BigDecimal(totalDiscount));
+                    BigDecimal price = p.getPrice().subtract(new BigDecimal(totalDiscount)).setScale(1,BigDecimal.ROUND_HALF_UP);
                     span1.setText(MESSAGE.get("New price") + price + " $.");
                     span2.setText(MESSAGE.get("Old price") + p.getPrice() + " $.");
                 } else {
                     double totalDiscount = p.getPrice().multiply(new BigDecimal(p.getDiscount().getValue().doubleValue() / 100)).doubleValue();
-                    BigDecimal price = p.getPrice().subtract(new BigDecimal(totalDiscount));
+                    BigDecimal price = p.getPrice().subtract(new BigDecimal(totalDiscount)).setScale(1,BigDecimal.ROUND_HALF_UP);
                     span1.setText(MESSAGE.get("New price") + price + " $.");
                     span2.setText(MESSAGE.get("Old price") + p.getPrice() + " $.");
                 }
@@ -239,9 +241,11 @@ public class CatalogView extends Div {
         return searchBar;
     }
 
-    private void pageProduct(Product showProduct, OrderService orderService) {
+    private void pageProduct(Product showProduct, OrderService orderService,ProductService productService) {
         PageProduct pageProduct = new PageProduct(orderService,showProduct,user,token);
         pageProduct.pageProduct();
+        createDataProvider(productService);
+        productGrid.setDataProvider(dataProvider);
     }
 
 

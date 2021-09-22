@@ -30,7 +30,6 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -38,10 +37,8 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Date;
 
 @Route(value = "order", layout = ViewCatalog.class)
 @PageTitle("Order")
@@ -63,14 +60,14 @@ public class OrderView extends Div {
         if (authResponse == null) {
             VerticalLayout verticalLayout = new VerticalLayout();
             verticalLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-            Image logo = new Image("images/error.png" , "ScooterClient error");
+            Image logo = new Image("images/error.png", "ScooterClient error");
             logo.setHeight("410px");
             logo.setWidth("800px");
             verticalLayout.add(logo);
             add(verticalLayout);
             UI.getCurrent().navigate(ErrorView.class);
 
-        }else if (authResponse.getUser().getRole().getName().equals("ROLE_ADMIN")) {
+        } else if (authResponse.getUser().getRole().getName().equals("ROLE_ADMIN")) {
             VerticalLayout verticalLayout = new VerticalLayout();
             verticalLayout.setAlignItems(FlexComponent.Alignment.CENTER);
             Image logo = new Image("images/error.png", "ScooterClient error");
@@ -79,7 +76,7 @@ public class OrderView extends Div {
             verticalLayout.add(logo);
             add(verticalLayout);
             UI.getCurrent().navigate(ErrorView.class);
-        } else  {
+        } else {
             user = authResponse.getUser();
             addClassName("order-view");
             createTitle();
@@ -91,6 +88,7 @@ public class OrderView extends Div {
             createStatusPayColum(orderService, userService);
             createStatusColum(orderService);
             orderGrid.addItemClickListener(event -> {
+
                 if (event.getItem().getOrderStatus() == null || event.getItem().getOrderStatus().equals(OrderStatus.DELIVERED)) {
                     try {
                         basketOrder(orderService, event.getItem());
@@ -100,6 +98,17 @@ public class OrderView extends Div {
                 }
 
             });
+            productGrid.addItemClickListener(basketItemClickEvent -> {
+                productGrid.getDataProvider().refreshAll();
+                Product product = orderService.getProduct(basketItemClickEvent.getItem().getProductId(), token);
+                if (product != null) {
+                    pageProduct(product, orderService);
+                } else {
+                    Notification.show("Sorry, the product is sold out :(", 2000, Notification.Position.MIDDLE);
+                }
+
+            });
+
         }
 
     }
@@ -154,7 +163,7 @@ public class OrderView extends Div {
                 addressComboBox.addValueChangeListener(
                         event -> {
                             if (event.getValue() != null) {
-                                order.setAddress(event.getValue().getAddress());
+                                order.setAddress(event.getValue().toString());
                                 boolean b = orderService.updateOrder(order, token);
                                 if (b) {
                                     try {
@@ -188,7 +197,7 @@ public class OrderView extends Div {
     }
 
     private void createStatusPayColum(OrderService orderService, UserService userService) {
-        address = orderGrid.addColumn(new ComponentRenderer<>(userOrder -> {
+        statusPay = orderGrid.addColumn(new ComponentRenderer<>(userOrder -> {
             UserOrder order = userOrder;
             VerticalLayout hl = new VerticalLayout();
             hl.setAlignItems(FlexComponent.Alignment.START);
@@ -196,7 +205,7 @@ public class OrderView extends Div {
             hl.add(span);
             if (order.getOrderStatus() == null) {
                 if (order.getOrderStatusPay().equals(OrderStatusPay.NOT)) {
-                    span.setText("Payment status: not paid ");
+                    span.setText("Not paid");
                     Button pay = new Button("To pay");
                     pay.addClickListener(event -> {
                         payOrder(orderService, order);
@@ -204,8 +213,14 @@ public class OrderView extends Div {
                     pay.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
                     hl.add(pay);
                 } else {
-                    span.setText("Payment status: paid for ");
+                    span.setText("Paid for ");
                 }
+            } else if (order.getOrderStatusPay().equals(OrderStatusPay.YES) && order.getOrderStatus().equals(OrderStatus.CANCELED)) {
+                span.setText("Paid for. Expect a refund.");
+            } else if (order.getOrderStatusPay().equals(OrderStatusPay.NOT) && order.getOrderStatus().equals(OrderStatus.CANCELED)) {
+                span.setText("Not paid.");
+            } else {
+                span.setText("Paid for ");
             }
 
 
@@ -246,17 +261,20 @@ public class OrderView extends Div {
                     try {
                         createDataProvider(orderService);
                         orderGrid.setDataProvider(dataProvider);
-                        Notification.show("Done!", 1500, Notification.Position.MIDDLE);
+                        Notification.show("Done!", 2000, Notification.Position.MIDDLE);
 
                     } catch (JsonProcessingException ex) {
                         ex.getMessage();
                     }
                     dialogPay.close();
 
+                } else {
+                    dialogPay.close();
+                    Notification.show("Some of your products have been deleted!Cancel the order and check the shopping cart!", 3000, Notification.Position.MIDDLE);
                 }
 
             } else {
-                Notification.show("Please, check your credit card details!", 1500, Notification.Position.MIDDLE);
+                Notification.show("Please, check your credit card details!", 2000, Notification.Position.MIDDLE);
             }
         });
         verticalLayout.add(cardNumber, code);
@@ -266,7 +284,7 @@ public class OrderView extends Div {
     }
 
     private void createStatusColum(OrderService orderService) {
-        address = orderGrid.addColumn(new ComponentRenderer<>(userOrder -> {
+        status = orderGrid.addColumn(new ComponentRenderer<>(userOrder -> {
             UserOrder order = userOrder;
             VerticalLayout hl = new VerticalLayout();
             hl.setAlignItems(FlexComponent.Alignment.START);
@@ -274,11 +292,18 @@ public class OrderView extends Div {
             hl.add(span);
 
             if (order.getOrderStatus() == null) {
-                span.setText("Status: In progress");
+                span.setText("In progress");
                 Button cancel = new Button("Cancel");
                 cancel.addClickListener(event -> {
                     cancelOrder(orderService, userOrder);
-                    span.setText("Status: Сanceled");
+                    span.setText("Сanceled");
+                    try {
+                        createDataProvider(orderService);
+                        orderGrid.setDataProvider(dataProvider);
+                    } catch (JsonProcessingException e) {
+                        e.getMessage();
+                    }
+
                 });
                 hl.add(cancel);
                 cancel.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -286,7 +311,13 @@ public class OrderView extends Div {
                     Button deliv = new Button("Deliver");
                     deliv.addClickListener(event -> {
                         delivOrder(orderService, order);
-                        span.setText("Status: Delivered");
+                        span.setText("Delivered");
+                        try {
+                            createDataProvider(orderService);
+                            orderGrid.setDataProvider(dataProvider);
+                        } catch (JsonProcessingException e) {
+                            e.getMessage();
+                        }
                     });
                     deliv.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
                     hl.add(deliv);
@@ -294,9 +325,9 @@ public class OrderView extends Div {
 
 
             } else if (order.getOrderStatus().equals(OrderStatus.CANCELED)) {
-                span.setText("Status: Сanceled");
+                span.setText("Сanceled");
             } else {
-                span.setText("Status: Delivered");
+                span.setText("Delivered");
             }
 
             return hl;
@@ -306,10 +337,14 @@ public class OrderView extends Div {
     private void cancelOrder(OrderService orderService, UserOrder order) {
 
         try {
+
             boolean cancelBasket = orderService.deleteOrder(new ProductRequest(order.getId(), user.getId()), token);
             order.setOrderStatus(OrderStatus.CANCELED);
             boolean cancelOrder = orderService.updateOrder(order, token);
 
+
+            System.out.println(cancelBasket);
+            System.out.println(cancelOrder);
             if (cancelOrder && cancelBasket) {
                 createDataProvider(orderService);
                 orderGrid.setDataProvider(dataProvider);
@@ -336,20 +371,37 @@ public class OrderView extends Div {
         }
     }
 
-    private ListDataProvider<Product> data;
-    private Grid<Product> productGrid = new Grid<>(Product.class);
-    private Grid.Column<Product> name;
-    private Grid.Column<Product> description;
+    private ListDataProvider<Basket> data;
+    private Grid<Basket> productGrid = new Grid<>(Basket.class);
+    private Grid.Column<Basket> name;
+    private Grid.Column<Basket> description;
 
     private void basketProductOrder(OrderService orderService, UserOrder userOrder) throws JsonProcessingException {
+
+        ArrayList<Basket> basketArrayList = orderService.getProductBasket(new ProductRequest(userOrder.getId(), user.getId()), token);
+        basketArrayList.sort(new Comparator<Basket>() {
+            public int compare(Basket b1, Basket b2) {
+                return b1.getDate().compareTo(b2.getDate());
+            }
+        });
+        data = new ListDataProvider<>(basketArrayList);
+
+       /*
+        productGrid.getDataProvider().refreshAll();
         ArrayList<Basket> basketArrayList = orderService.getProductBasket(new ProductRequest(userOrder.getId(), user.getId()), token);
         ArrayList<Product> products = new ArrayList<>();
         basketArrayList.stream().forEach(basket -> {
             Product product = orderService.getProduct(basket.getProductId(), token);
-            products.add(product);
-        });
+            if(product == null){
+                products.add(null);
+            }else {
+                products.add(product);
+            }
 
-        data = new ListDataProvider<>(products);
+        });
+        */
+
+       // data = new ListDataProvider<>(products);
     }
 
     private Component createGridProductOrder() {
@@ -359,53 +411,76 @@ public class OrderView extends Div {
     }
 
     private void createNameProductColum(OrderService orderService) {
-        name = productGrid.addColumn(new ComponentRenderer<>(product -> {
+        name = productGrid.addColumn(new ComponentRenderer<>(basket -> {
             VerticalLayout hl = new VerticalLayout();
             hl.setAlignItems(FlexComponent.Alignment.AUTO);
-            Image logo = new Image("images/" + product.getImage(), "ScooterClient logo");
-            logo.setWidth("30px");
-            logo.setHeight("30px");
-            Span span = new Span();
-            span.setClassName("name");
-            span.setText(product.getName());
-            hl.add(logo, span);
-            return hl;
+            Product product = orderService.getProduct(basket.getProductId(), token);
+            if (product != null) {
+                Image logo = new Image("images/" + product.getImage(), "ScooterClient logo");
+                logo.setWidth("40px");
+                logo.setHeight("40px");
+                Span span = new Span();
+                span.setClassName("name");
+                span.setText(product.getName());
+                hl.add(logo, span);
+                return hl;
+            } else {
+                Image logo = new Image("images/logo.png", "ScooterClient logo");
+                logo.setWidth("40px");
+                logo.setHeight("40px");
+                hl.add(logo);
+                return hl;
+            }
+
         })).setHeader("Product");
     }
 
     private void createDescriptionProductColum(OrderService orderService) {
-        productGrid.addColumn(new ComponentRenderer<>(product -> {
+
+        description = productGrid.addColumn(new ComponentRenderer<>(basket -> {
             VerticalLayout hl = new VerticalLayout();
-            hl.setAlignItems(FlexComponent.Alignment.AUTO);
-            Span span = new Span();
-            span.setClassName("descriprion");
-            span.setText(product.getDescription());
-            hl.add(span);
-            return hl;
+            Product product = orderService.getProduct(basket.getProductId(), token);
+            if (product != null) {
+                hl.setAlignItems(FlexComponent.Alignment.AUTO);
+                Span span = new Span();
+                span.setClassName("descriprion");
+                span.setText(product.getDescription());
+                hl.add(span);
+                return hl;
+            } else {
+                Span span = new Span();
+                span.setClassName("count");
+                span.setText("The product is sold out");
+                hl.add(span);
+                return hl;
+            }
         })).setHeader("Desctiption");
     }
 
     private void basketOrder(OrderService orderService, UserOrder userOrder) throws JsonProcessingException {
+        // productGrid.getDataProvider().refreshAll();
         Dialog dialog = new Dialog();
         dialog.setWidth("700px");
         basketProductOrder(orderService, userOrder);
         dialog.add(createGridProductOrder());
         createNameProductColum(orderService);
         createDescriptionProductColum(orderService);
-
-        productGrid.addItemClickListener(basketItemClickEvent -> {
-
-            pageProduct(basketItemClickEvent.getItem(), orderService);
-        });
         Button close = new Button("Cancel", e -> {
             dialog.close();
         });
         dialog.add(new Div(close));
         dialog.open();
+
     }
 
     private void pageProduct(Product showProduct, OrderService orderService) {
-        PageProduct pageProduct = new PageProduct(orderService,showProduct,user,token);
-        pageProduct.pageProduct();
+        productGrid.getDataProvider().refreshAll();
+        if (showProduct != null) {
+            PageProduct pageProduct = new PageProduct(orderService, showProduct, user, token);
+            pageProduct.pageProduct();
+        } else {
+            Notification.show("Sorry, the product is sold out :(", 2000, Notification.Position.MIDDLE);
+        }
+
     }
 }

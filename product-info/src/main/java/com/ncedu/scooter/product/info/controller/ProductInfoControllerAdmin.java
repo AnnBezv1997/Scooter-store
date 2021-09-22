@@ -64,7 +64,7 @@ public class ProductInfoControllerAdmin {
 
     @Operation(summary = "Admin create product.", description = "")
     @PostMapping("/add/product")
-    public boolean createProduct(@RequestBody @Valid Product product) {
+    public Product createProduct(@RequestBody @Valid Product product) {
         return productService.saveProduct(product);
 
     }
@@ -113,7 +113,7 @@ public class ProductInfoControllerAdmin {
 
     @Operation(summary = "Admin update product.", description = "")
     @PostMapping("/update/product")
-    public boolean updateProduct(@RequestBody @Valid Product product) {
+    public Product updateProduct(@RequestBody @Valid Product product) {
         return productService.updateProduct(product);
 
     }
